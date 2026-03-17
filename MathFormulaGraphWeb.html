@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Formula Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body{font-family:Arial, sans-serif;background:#f4f6fb;margin:0;padding:40px}
+        .container{max-width:900px;margin:auto}
+        .card{background:white;border-radius:16px;padding:30px;box-shadow:0 10px 25px rgba(0,0,0,0.08);margin-bottom:30px}
+        .formula{font-size:28px;text-align:center}
+        .slider-group{margin-top:20px}
+        label{display:block;margin-bottom:6px;font-weight:600}
+        .value{font-weight:400;margin-left:10px;color:#4f6df5}
+        input[type=range]{width:100%}
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="card">
+        <h2>Time Value of Money Formula</h2>
+        <div class="formula">FV = PV(1+r)^n</div>
+    </div>
+
+    <div class="card">
+        <h2>Investment Growth Graph</h2>
+
+        <div class="slider-group">
+            <label>PV (현재 투자금) <span id="pvValue" class="value"></span></label>
+            <input type="range" id="pv" min="1000" max="200000" step="1000" value="53000">
+        </div>
+
+        <div class="slider-group">
+            <label>Rate % (이자율) <span id="rateValue" class="value"></span></label>
+            <input type="range" id="rate" min="1" max="20" step="0.1" value="8.63">
+        </div>
+
+        <div class="slider-group">
+            <label>Years (기간) <span id="yearsValue" class="value"></span></label>
+            <input type="range" id="years" min="1" max="40" step="1" value="18">
+        </div>
+
+        <canvas id="chart"></canvas>
+    </div>
+
+</div>
+
+<script>
+    let chart
+
+    const pvSlider=document.getElementById('pv')
+    const rateSlider=document.getElementById('rate')
+    const yearsSlider=document.getElementById('years')
+
+    function updateValues(){
+        document.getElementById('pvValue').textContent=pvSlider.value
+        document.getElementById('rateValue').textContent=rateSlider.value+"%"
+        document.getElementById('yearsValue').textContent=yearsSlider.value
+    }
+
+    function calculate(){
+        const pv=parseFloat(pvSlider.value)
+        const rate=parseFloat(rateSlider.value)/100
+        const years=parseInt(yearsSlider.value)
+
+        let values=[]
+        let labels=[]
+
+        for(let i=0;i<=years;i++){
+            let fv=pv*Math.pow(1+rate,i)
+            values.push(fv)
+            labels.push("Year "+i)
+        }
+
+        if(chart){chart.destroy()}
+
+        chart=new Chart(document.getElementById('chart'),{
+            type:'line',
+            data:{
+                labels:labels,
+                datasets:[{
+                    label:'Future Value Growth',
+                    data:values,
+                    borderWidth:2
+                }]
+            },
+            options:{
+                responsive:true,
+                plugins:{
+                    legend:{display:true}
+                }
+            }
+        })
+    }
+
+    function update(){
+        updateValues()
+        calculate()
+    }
+
+    pvSlider.addEventListener('input',update)
+    rateSlider.addEventListener('input',update)
+    yearsSlider.addEventListener('input',update)
+
+    update()
+</script>
+
+</body>
+</html>
