@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>2048</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: #1A1A2E;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      touch-action: none; overflow: hidden;
+    }
+    #back-btn {
+      background: rgba(255,224,102,0.15);
+      border: 1.5px solid rgba(255,224,102,0.4);
+      border-radius: 8px;
+      color: rgba(255,224,102,0.9);
+      font-size: 12px; font-weight: bold;
+      font-family: 'Courier New', monospace;
+      padding: 5px 10px; cursor: pointer;
+      letter-spacing: 1px; white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #back-btn:active { background: rgba(255,224,102,0.3); }
+    #hud {
+      width: 100%; max-width: 440px;
+      display: flex; justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 6px;
+    }
+    .score-box {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 5px 16px; text-align: center; min-width: 80px;
+    }
+    .score-box .lbl { font-size: 10px; color: #888; letter-spacing: 1px; }
+    .score-box .val { font-size: 19px; font-weight: bold; color: #FFE066; margin-top: 1px; }
+    #hud-title {
+      font-size: 28px; font-weight: bold;
+      color: #EDC22E;
+      text-shadow: 0 0 14px rgba(237,194,46,0.5);
+      letter-spacing: 2px;
+    }
+    canvas {
+      display: block;
+      touch-action: none;
+      border-radius: 12px;
+      margin: 0 auto;
+    }
+    #dpad {
+      position: fixed; bottom: 18px; right: 16px;
+      width: 116px; height: 116px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px; z-index: 5;
+    }
+    .dpad-btn {
+      background: rgba(255,224,102,0.12);
+      border: 1.5px solid rgba(255,224,102,0.3);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; color: rgba(255,224,102,0.75);
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+    }
+    .dpad-btn:active { background: rgba(255,224,102,0.28); }
+    .dpad-empty { background: transparent; border: none; }
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,10,24,0.93);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: 'Courier New', monospace;
+      z-index: 10;
+    }
+    #overlay h1 {
+      font-size: 68px; font-weight: bold;
+      color: #EDC22E;
+      text-shadow: 0 0 28px rgba(237,194,46,0.7);
+      letter-spacing: 4px; margin-bottom: 6px;
+    }
+    #overlay .sub  { font-size: 12px; color: #555; letter-spacing: 3px; margin-bottom: 22px; }
+    #overlay .rule {
+      font-size: 13px; color: #888;
+      text-align: center; line-height: 1.9;
+      margin-bottom: 26px;
+    }
+    #overlay .btn {
+      background: #EDC22E; color: #1A1A2E; border: none;
+      padding: 13px 42px; font-size: 16px; font-weight: bold;
+      font-family: inherit; letter-spacing: 2px;
+      border-radius: 10px; cursor: pointer;
+    }
+    #overlay .btn:active { transform: scale(0.97); }
+    #overlay .hi { font-size: 13px; color: #666; margin-top: 12px; }
+    #msg {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 26px; font-weight: bold;
+      letter-spacing: 3px; pointer-events: none;
+      z-index: 8; opacity: 0; transition: opacity 0.35s;
+      text-align: center; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div id="hud">
+  <button id="back-btn" onclick="window.location.href='../home-mockup.html'">← HOME</button>
+  <div class="score-box">
+    <div class="lbl">SCORE</div>
+    <div class="val" id="scoreVal">0</div>
+  </div>
+  <div id="hud-title">2048</div>
+  <div class="score-box">
+    <div class="lbl">BEST</div>
+    <div class="val" id="bestVal">0</div>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+<div id="msg"></div>
+
+<div id="dpad">
+  <div class="dpad-empty"></div>
+  <div class="dpad-btn" data-dir="up">▲</div>
+  <div class="dpad-empty"></div>
+  <div class="dpad-btn" data-dir="left">◀</div>
+  <div class="dpad-empty"></div>
+  <div class="dpad-btn" data-dir="right">▶</div>
+  <div class="dpad-empty"></div>
+  <div class="dpad-btn" data-dir="down">▼</div>
+  <div class="dpad-empty"></div>
+</div>
+
+<div id="overlay">
+  <h1>2048</h1>
+  <div class="sub">ZEPETO WORLD</div>
+  <div class="rule">타일을 밀어 같은 숫자를 합쳐보세요<br>8×8 보드에서 2048을 만들면 성공!</div>
+  <button class="btn" id="startBtn">START GAME</button>
+  <div class="hi" id="overlayHi"></div>
+</div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────
+const SIZE = 8;
+const PAD  = 7;
+const GAP  = 4;
+
+// ── CANVAS ────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+function resize() {
+  const s = Math.min(window.innerWidth - 8, 408);
+  canvas.width = canvas.height = s;
+}
+resize();
+window.addEventListener('resize', () => { resize(); if (grid) draw(); });
+
+const CELL = () => (canvas.width - PAD * 2 - GAP * (SIZE - 1)) / SIZE;
+const cx   = c => PAD + c * (CELL() + GAP) + CELL() / 2;
+const cy   = r => PAD + r * (CELL() + GAP) + CELL() / 2;
+
+// ── TILE COLOURS ──────────────────────────────────────────────────────
+const TILE_BG = {
+  0:     'rgba(255,255,255,0.05)',
+  2:     '#EEE4DA',  4:     '#EDE0C8',
+  8:     '#F2B179',  16:    '#F59563',
+  32:    '#F67C5F',  64:    '#F65E3B',
+  128:   '#EDCF72',  256:   '#EDCC61',
+  512:   '#EDC850',  1024:  '#EDC53F',
+  2048:  '#EDC22E',  4096:  '#5EC050',
+  8192:  '#38AADD',  16384: '#AA44CC',
+};
+const LIGHT_TEXT = new Set([2, 4]);
+
+function tileBg(v)  { return TILE_BG[v] || '#444'; }
+function tileFg(v)  { return LIGHT_TEXT.has(v) ? '#776E65' : '#F9F6F2'; }
+function tileFontSize(v) {
+  const d = String(v).length, c = CELL();
+  if (d <= 2) return c * 0.44;
+  if (d === 3) return c * 0.35;
+  if (d === 4) return c * 0.27;
+  return c * 0.22;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let grid, score, best, gameOver, won, keepGoing;
+let anims = {};   // "r,c" → {type, f, max}
+let frameCount = 0;
+
+// ── INIT ──────────────────────────────────────────────────────────────
+function initGame() {
+  grid       = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+  score      = 0;
+  gameOver   = false;
+  won        = false;
+  keepGoing  = false;
+  anims      = {};
+  best       = parseInt(localStorage.getItem('2048_best') || '0');
+  addTile(); addTile();
+  updateHUD();
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function addTile() {
+  const empty = [];
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++)
+      if (grid[r][c] === 0) empty.push([r, c]);
+  if (!empty.length) return;
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  grid[r][c] = Math.random() < 0.88 ? 2 : 4;
+  anims[`${r},${c}`] = { type: 'spawn', f: 0, max: 12 };
+}
+
+// ── MOVE LOGIC ────────────────────────────────────────────────────────
+function slideRow(row) {
+  const nums = row.filter(x => x !== 0);
+  const result = [], merged = [];
+  let gained = 0, i = 0;
+  while (i < nums.length) {
+    if (i + 1 < nums.length && nums[i] === nums[i + 1]) {
+      const v = nums[i] * 2;
+      result.push(v);
+      gained += v;
+      merged.push(result.length - 1);
+      i += 2;
+    } else {
+      result.push(nums[i++]);
+    }
+  }
+  while (result.length < SIZE) result.push(0);
+  return { result, gained, merged };
+}
+
+function getLine(i, dir) {
+  const idxs = Array.from({length: SIZE}, (_, k) => k);
+  if (dir === 'left')  return idxs.map(c => grid[i][c]);
+  if (dir === 'right') return idxs.map(c => grid[i][SIZE - 1 - c]);
+  if (dir === 'up')    return idxs.map(r => grid[r][i]);
+  if (dir === 'down')  return idxs.map(r => grid[SIZE - 1 - r][i]);
+}
+
+function setLine(i, dir, vals, merged) {
+  const place = (r, c, j) => {
+    grid[r][c] = vals[j];
+    if (merged.includes(j) && vals[j] !== 0)
+      anims[`${r},${c}`] = { type: 'merge', f: 0, max: 10 };
+  };
+  const n = SIZE;
+  if (dir === 'left')  { for (let j=0;j<n;j++) place(i, j, j);           return; }
+  if (dir === 'right') { for (let j=0;j<n;j++) place(i, n-1-j, j);       return; }
+  if (dir === 'up')    { for (let j=0;j<n;j++) place(j, i, j);           return; }
+  if (dir === 'down')  { for (let j=0;j<n;j++) place(n-1-j, i, j);       return; }
+}
+
+function move(dir) {
+  if (!grid || gameOver) return false;
+  let moved = false, gained = 0;
+  for (let i = 0; i < SIZE; i++) {
+    const line = getLine(i, dir);
+    const { result, gained: g, merged } = slideRow(line);
+    if (line.some((v, j) => v !== result[j])) {
+      moved = true; gained += g;
+      setLine(i, dir, result, merged);
+    }
+  }
+  if (moved) {
+    score += gained;
+    if (score > best) { best = score; localStorage.setItem('2048_best', best); }
+    addTile();
+    updateHUD();
+    if (!keepGoing && !won && grid.some(row => row.includes(2048))) {
+      won = true;
+      setTimeout(() => { showMsg('🎉 2048!', '#EDC22E'); }, 200);
+      setTimeout(() => { keepGoing = true; }, 1400);
+    } else if (!canMove()) {
+      gameOver = true;
+      setTimeout(showGameOver, 400);
+    }
+  }
+  return moved;
+}
+
+function canMove() {
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) {
+      if (grid[r][c] === 0) return true;
+      if (c < SIZE-1 && grid[r][c] === grid[r][c+1]) return true;
+      if (r < SIZE-1 && grid[r][c] === grid[r+1][c]) return true;
+    }
+  return false;
+}
+
+// ── DRAW ──────────────────────────────────────────────────────────────
+function draw() {
+  const cl = CELL(), W = canvas.width;
+
+  ctx.fillStyle = '#2A2A4A';
+  ctx.beginPath(); ctx.roundRect(0, 0, W, W, 12); ctx.fill();
+
+  // empty cells
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      ctx.fillStyle = 'rgba(255,255,255,0.045)';
+      ctx.beginPath();
+      ctx.roundRect(PAD + c*(cl+GAP), PAD + r*(cl+GAP), cl, cl, 5);
+      ctx.fill();
+    }
+  }
+
+  // tiles
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const v = grid[r][c];
+      if (!v) continue;
+
+      const bx = PAD + c * (cl + GAP), by = PAD + r * (cl + GAP);
+      const mx = bx + cl / 2, my = by + cl / 2;
+
+      let scale = 1;
+      const anim = anims[`${r},${c}`];
+      if (anim) {
+        const t = anim.f / anim.max;
+        if (anim.type === 'spawn')
+          scale = t < 0.6 ? (t/0.6)*1.1 : 1.1 - (t-0.6)/0.4*0.1;
+        else
+          scale = 1 + 0.16 * Math.sin(t * Math.PI);
+      }
+
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.scale(scale, scale);
+
+      if (v >= 2048) { ctx.shadowColor = '#EDC22E'; ctx.shadowBlur = 14; }
+
+      ctx.fillStyle = tileBg(v);
+      ctx.beginPath(); ctx.roundRect(-cl/2, -cl/2, cl, cl, 5); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.font = `bold ${tileFontSize(v)}px 'Courier New', monospace`;
+      ctx.fillStyle = tileFg(v);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(v), 0, 1);
+      ctx.restore();
+    }
+  }
+  frameCount++;
+}
+
+// ── LOOP ──────────────────────────────────────────────────────────────
+let lastTS = 0;
+function loop(ts = 0) {
+  if (ts - lastTS >= 16) {
+    for (const k of Object.keys(anims)) {
+      anims[k].f++;
+      if (anims[k].f >= anims[k].max) delete anims[k];
+    }
+    if (grid) draw();
+    lastTS = ts;
+  }
+  requestAnimationFrame(loop);
+}
+
+// ── HUD ───────────────────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('bestVal').textContent  = best;
+}
+
+let msgTO;
+function showMsg(text, color = '#FFE066') {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.textShadow = `0 0 14px ${color}`;
+  el.style.opacity = 1;
+  clearTimeout(msgTO);
+  msgTO = setTimeout(() => el.style.opacity = 0, 1400);
+}
+
+function showGameOver() {
+  const ov = document.getElementById('overlay');
+  ov.querySelector('h1').textContent   = 'GAME OVER';
+  ov.querySelector('.sub').textContent = 'SCORE: ' + score;
+  ov.querySelector('.rule').textContent = '';
+  document.getElementById('startBtn').textContent  = 'PLAY AGAIN';
+  document.getElementById('overlayHi').textContent = 'BEST: ' + best;
+  ov.style.display = 'flex';
+}
+
+// ── INPUT ─────────────────────────────────────────────────────────────
+const KEYMAP = {
+  ArrowLeft: 'left', ArrowRight: 'right',
+  ArrowUp:   'up',   ArrowDown:  'down',
+  a: 'left', d: 'right', w: 'up', s: 'down',
+};
+
+// e.preventDefault() comes FIRST to always block page scrolling,
+// then guard with grid check before calling move()
+document.addEventListener('keydown', e => {
+  const dir = KEYMAP[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  if (grid && !gameOver) move(dir);
+});
+
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+  const go = () => { if (grid && !gameOver) move(btn.dataset.dir); };
+  btn.addEventListener('touchstart', e => { e.preventDefault(); go(); }, {passive: false});
+  btn.addEventListener('mousedown', go);
+});
+
+let swipeStart = null;
+canvas.addEventListener('touchstart', e => {
+  swipeStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, {passive: true});
+canvas.addEventListener('touchend', e => {
+  if (!swipeStart || !grid) return;
+  const dx = e.changedTouches[0].clientX - swipeStart.x;
+  const dy = e.changedTouches[0].clientY - swipeStart.y;
+  swipeStart = null;
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+  move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+}, {passive: true});
+
+document.getElementById('startBtn').addEventListener('click', initGame);
+
+(function init() {
+  const hi = localStorage.getItem('2048_best');
+  if (hi) document.getElementById('overlayHi').textContent = 'BEST: ' + hi;
+  loop();
+})();
+</script>
+</body>
+</html>
