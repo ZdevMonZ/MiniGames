@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>오셀로</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  width: 100%;
+  max-width: 450px;
+}
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+}
+.pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 7px 15px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 110px;
+}
+#board-wrap { position: relative; }
+canvas {
+  display: block;
+  border-radius: 10px;
+  cursor: crosshair;
+}
+#overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: rgba(10,6,35,0.93);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 10;
+}
+.ov-title {
+  font-size: 32px; font-weight: 900; color: #fff;
+  letter-spacing: 5px;
+  text-shadow: 0 0 30px rgba(120,100,255,0.45);
+}
+.ov-sub {
+  font-size: 14px; color: rgba(255,255,255,0.5);
+  text-align: center; line-height: 1.75;
+}
+.diff-list {
+  display: flex; flex-direction: column; gap: 10px; width: 256px;
+}
+.diff-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.13);
+  border-radius: 14px; color: #fff;
+  padding: 13px 17px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; width: 100%;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.diff-btn:hover                { transform: translateX(5px); }
+.diff-btn.d-easy:hover { background: rgba(56,195,90,0.17);  border-color: rgba(56,195,90,0.55); }
+.diff-btn.d-mid:hover  { background: rgba(255,183,0,0.17);  border-color: rgba(255,183,0,0.55); }
+.diff-btn.d-hard:hover { background: rgba(255,82,82,0.17);  border-color: rgba(255,82,82,0.55); }
+.diff-dot {
+  width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+}
+.d-easy .diff-dot { background: #38c35a; box-shadow: 0 0 8px rgba(56,195,90,0.7); }
+.d-mid  .diff-dot { background: #ffb700; box-shadow: 0 0 8px rgba(255,183,0,0.7); }
+.d-hard .diff-dot { background: #ff5252; box-shadow: 0 0 8px rgba(255,82,82,0.7); }
+.diff-txt { display: flex; flex-direction: column; gap: 2px; }
+.diff-name { font-size: 15px; font-weight: 700; }
+.diff-desc { font-size: 12px; color: rgba(255,255,255,0.45); }
+.color-row { display: flex; gap: 36px; }
+.cpick {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 9px; cursor: pointer;
+}
+.sbtn {
+  width: 68px; height: 68px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  transition: transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+  pointer-events: none;
+}
+.cpick:hover .sbtn { transform: scale(1.12); border-color: #00d4ff; box-shadow: 0 0 22px rgba(0,212,255,0.5); }
+.sbtn.is-black { background: radial-gradient(circle at 34% 32%, #5c5c5c, #0a0a0a 74%); box-shadow: 2px 3px 9px rgba(0,0,0,0.65); }
+.sbtn.is-white { background: radial-gradient(circle at 34% 32%, #ffffff, #c2c2c2 74%); box-shadow: 2px 3px 9px rgba(0,0,0,0.4); }
+.clabel { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; }
+#home-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.75);
+  font-size: 12px; font-weight: 700;
+  padding: 7px 14px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+#home-btn:hover { background: rgba(0,212,255,0.18); border-color: rgba(0,212,255,0.5); color: #fff; }
+.dbadge {
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
+}
+.dbadge.easy { background: rgba(56,195,90,0.2);  color: #5edf7a; border: 1px solid rgba(56,195,90,0.35); }
+.dbadge.mid  { background: rgba(255,183,0,0.18); color: #ffc933; border: 1px solid rgba(255,183,0,0.35); }
+.dbadge.hard { background: rgba(255,82,82,0.18); color: #ff7070; border: 1px solid rgba(255,82,82,0.35); }
+.btn {
+  padding: 10px 26px; border-radius: 50px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all 0.18s;
+}
+.btn:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.btn-g { background: linear-gradient(135deg, #667eea, #764ba2); border: none; }
+.btn-g:hover { opacity: 0.87; transform: scale(1.04); }
+.btn-sm { font-size: 12px; padding: 7px 18px; }
+.ov-badge { font-size: 48px; font-weight: 900; letter-spacing: 2px; }
+.c-win  { color: #00d4ff; text-shadow: 0 0 28px rgba(0,212,255,0.75); }
+.c-lose { color: #ff6b6b; text-shadow: 0 0 22px rgba(255,107,107,0.55); }
+.c-draw { color: #ffd93d; text-shadow: 0 0 22px rgba(255,217,61,0.55); }
+#count-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: radial-gradient(circle at 34% 32%, #5c5c5c, #0a0a0a 74%);
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.7);
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <button id="home-btn" onclick="window.location.href='../index.html'">← HOME</button>
+    <div class="pill">
+      <div id="count-dot"></div>
+      <span id="count-text">흑 2</span>
+    </div>
+    <div class="pill" style="justify-content:center">
+      <span id="diff-badge" class="dbadge" style="display:none"></span>
+      <span id="status-el">준비 중</span>
+    </div>
+  </div>
+  <div id="board-wrap">
+    <canvas id="c"></canvas>
+    <div id="overlay"></div>
+  </div>
+</div>
+<script>
+const N = 8;
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const WEIGHTS = [
+  [120,-20,20,5,5,20,-20,120],
+  [-20,-40,-5,-5,-5,-5,-40,-20],
+  [20,-5,15,3,3,15,-5,20],
+  [5,-5,3,3,3,3,-5,5],
+  [5,-5,3,3,3,3,-5,5],
+  [20,-5,15,3,3,15,-5,20],
+  [-20,-40,-5,-5,-5,-5,-40,-20],
+  [120,-20,20,5,5,20,-20,120]
+];
+
+const canvas    = document.getElementById('c');
+const ctx       = canvas.getContext('2d');
+const OV        = document.getElementById('overlay');
+const countDot  = document.getElementById('count-dot');
+const countTxt  = document.getElementById('count-text');
+const statusEl  = document.getElementById('status-el');
+const diffBadge = document.getElementById('diff-badge');
+
+let CELL, SR;
+let board, pColor, aiColor, turn;
+let over = true, lastMove = null;
+let difficulty = 'medium';
+let animFlipping = null, animStart = 0;
+let aiScheduled = false;
+
+function opp(c) { return c === BLACK ? WHITE : BLACK; }
+
+function resize() {
+  CELL = Math.floor(Math.min(window.innerWidth - 16, 420) / N);
+  SR   = Math.floor(CELL * 0.42);
+  const px = CELL * N;
+  canvas.width = canvas.height = px;
+  canvas.style.width  = px + 'px';
+  canvas.style.height = px + 'px';
+  document.getElementById('board-wrap').style.width  = px + 'px';
+  document.getElementById('board-wrap').style.height = px + 'px';
+  if (!over) draw();
+}
+
+function showDiffScreen() {
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">오 셀 로</div>
+    <div class="ov-sub">난이도를 선택하세요</div>
+    <div class="diff-list">
+      <button class="diff-btn d-easy" onclick="pickDiff('easy')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">초보</div>
+          <div class="diff-desc">쉽게 이길 수 있어요</div>
+        </div>
+      </button>
+      <button class="diff-btn d-mid" onclick="pickDiff('medium')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">중수</div>
+          <div class="diff-desc">적당한 실력의 AI</div>
+        </div>
+      </button>
+      <button class="diff-btn d-hard" onclick="pickDiff('hard')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">고수</div>
+          <div class="diff-desc">이기기 매우 어려워요</div>
+        </div>
+      </button>
+    </div>`;
+}
+
+function pickDiff(d) {
+  difficulty = d;
+  showColorScreen();
+}
+
+function showColorScreen() {
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">오 셀 로</div>
+    <div class="ov-sub">돌 색을 선택하세요<br>흑이 항상 먼저 둡니다</div>
+    <div class="color-row">
+      <div class="cpick" onclick="startGame(1)">
+        <div class="sbtn is-black"></div>
+        <div class="clabel">흑 · 선공</div>
+      </div>
+      <div class="cpick" onclick="startGame(2)">
+        <div class="sbtn is-white"></div>
+        <div class="clabel">백 · 후공</div>
+      </div>
+    </div>
+    <button class="btn btn-sm" onclick="showDiffScreen()">← 난이도 변경</button>`;
+}
+
+function startGame(pc) {
+  pColor  = pc;
+  aiColor = opp(pc);
+  board   = Array.from({length: N}, () => new Array(N).fill(EMPTY));
+  board[3][3] = WHITE; board[3][4] = BLACK;
+  board[4][3] = BLACK; board[4][4] = WHITE;
+  turn        = BLACK;
+  over        = false;
+  lastMove    = null;
+  animFlipping = null;
+  aiScheduled  = false;
+  OV.style.display = 'none';
+  updateHUD();
+  draw();
+  if (aiColor === BLACK) schedAI();
+}
+
+function countDiscs() {
+  let b = 0, w = 0;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      if (board[r][c] === BLACK) b++;
+      else if (board[r][c] === WHITE) w++;
+    }
+  return [b, w];
+}
+
+function updateHUD() {
+  const [b, w] = countDiscs();
+  countDot.style.background = 'radial-gradient(circle at 34% 32%, #5c5c5c, #0a0a0a 74%)';
+  countDot.style.boxShadow  = 'inset 0 -2px 4px rgba(0,0,0,0.7)';
+  countTxt.textContent = `흑 ${b}  백 ${w}`;
+
+  const diffMap = { easy: ['초보','easy'], medium: ['중수','mid'], hard: ['고수','hard'] };
+  const [label, cls] = diffMap[difficulty];
+  diffBadge.style.display = '';
+  diffBadge.textContent   = label;
+  diffBadge.className     = `dbadge ${cls}`;
+
+  if (over) {
+    statusEl.textContent = '종료';
+  } else if (turn === pColor) {
+    statusEl.textContent = '내 차례';
+  } else {
+    statusEl.textContent = 'AI 생각 중...';
+  }
+}
+
+function getFlipped(r, c, col) {
+  if (board[r][c] !== EMPTY) return [];
+  const op = opp(col);
+  const result = [];
+  for (const [dr, dc] of DIRS) {
+    const line = [];
+    let nr = r + dr, nc = c + dc;
+    while (nr >= 0 && nr < N && nc >= 0 && nc < N && board[nr][nc] === op) {
+      line.push([nr, nc]);
+      nr += dr; nc += dc;
+    }
+    if (line.length > 0 && nr >= 0 && nr < N && nc >= 0 && nc < N && board[nr][nc] === col) {
+      for (const cell of line) result.push(cell);
+    }
+  }
+  return result;
+}
+
+function getValidMoves(col) {
+  const moves = [];
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (board[r][c] === EMPTY && getFlipped(r, c, col).length > 0)
+        moves.push([r, c]);
+  return moves;
+}
+
+function doFlip(r, c, col) {
+  const flipped = getFlipped(r, c, col);
+  board[r][c] = col;
+  for (const [fr, fc] of flipped) board[fr][fc] = col;
+  return flipped;
+}
+
+function undoFlip(r, c, col, flipped) {
+  board[r][c] = EMPTY;
+  const op = opp(col);
+  for (const [fr, fc] of flipped) board[fr][fc] = op;
+}
+
+function evalBoard() {
+  let score = 0;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      if (board[r][c] === aiColor) score += WEIGHTS[r][c];
+      else if (board[r][c] === pColor) score -= WEIGHTS[r][c];
+    }
+  return score;
+}
+
+function minimax(depth, isMax, alpha, beta, col) {
+  const moves = getValidMoves(col);
+  if (depth === 0 || (moves.length === 0 && getValidMoves(opp(col)).length === 0)) return evalBoard();
+  if (moves.length === 0) return minimax(depth - 1, !isMax, alpha, beta, opp(col));
+  if (isMax) {
+    let best = -Infinity;
+    for (const [r, c] of moves) {
+      const flipped = doFlip(r, c, col);
+      best = Math.max(best, minimax(depth - 1, false, alpha, beta, opp(col)));
+      undoFlip(r, c, col, flipped);
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const [r, c] of moves) {
+      const flipped = doFlip(r, c, opp(col));
+      best = Math.min(best, minimax(depth - 1, true, alpha, beta, col));
+      undoFlip(r, c, opp(col), flipped);
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function bestMoveEasy(moves) {
+  return moves[Math.floor(Math.random() * moves.length)];
+}
+
+function bestMoveMedium(moves) {
+  let best = -Infinity, bm = moves[0];
+  for (const [r, c] of moves) {
+    const flipped = getFlipped(r, c, aiColor);
+    let score = flipped.length + WEIGHTS[r][c] * 0.05;
+    if (score > best) { best = score; bm = [r, c]; }
+  }
+  return bm;
+}
+
+function bestMoveHard(moves) {
+  let best = -Infinity, bm = moves[0];
+  for (const [r, c] of moves) {
+    const flipped = doFlip(r, c, aiColor);
+    const score = minimax(3, false, -Infinity, Infinity, pColor);
+    undoFlip(r, c, aiColor, flipped);
+    if (score > best) { best = score; bm = [r, c]; }
+  }
+  return bm;
+}
+
+function place(r, c, col, callback) {
+  const flipped = getFlipped(r, c, col);
+  board[r][c] = col;
+  lastMove = [r, c];
+
+  animFlipping = flipped;
+  animStart    = performance.now();
+
+  const animDur = 200;
+  function animate(now) {
+    const t = Math.min((now - animStart) / animDur, 1);
+    for (const [fr, fc] of flipped) {
+      if (t >= 0.5) board[fr][fc] = col;
+    }
+    draw(t < 0.5 ? t * 2 : (t - 0.5) * 2, flipped, t >= 0.5 ? col : opp(col));
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      for (const [fr, fc] of flipped) board[fr][fc] = col;
+      animFlipping = null;
+      draw();
+      if (callback) callback();
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function advanceTurn() {
+  if (over) return;
+  const nextTurn = opp(turn);
+  const nextMoves = getValidMoves(nextTurn);
+  const curMoves  = getValidMoves(turn);
+
+  if (nextMoves.length === 0 && curMoves.length === 0) {
+    over = true;
+    draw();
+    const [b, w] = countDiscs();
+    setTimeout(() => {
+      let result;
+      if (b === w) result = 'draw';
+      else if ((b > w && pColor === BLACK) || (w > b && pColor === WHITE)) result = 'win';
+      else result = 'lose';
+      showResult(result, b, w);
+    }, 600);
+    return;
+  }
+
+  if (nextMoves.length === 0) {
+    statusEl.textContent = '패스됨 (유효한 수 없음)';
+    setTimeout(() => {
+      if (over) return;
+      if (turn === pColor) {
+        schedAI();
+      } else {
+        updateHUD();
+      }
+    }, 1500);
+    return;
+  }
+
+  turn = nextTurn;
+  updateHUD();
+  if (turn === aiColor && !aiScheduled) schedAI();
+}
+
+function schedAI() {
+  if (over || aiScheduled) return;
+  aiScheduled = true;
+  updateHUD();
+  const delay = { easy: 300, medium: 400, hard: 600 }[difficulty];
+  setTimeout(() => {
+    aiScheduled = false;
+    if (over) return;
+    const moves = getValidMoves(aiColor);
+    if (!moves.length) { advanceTurn(); return; }
+    let m;
+    if (difficulty === 'easy')   m = bestMoveEasy(moves);
+    else if (difficulty === 'hard') m = bestMoveHard(moves);
+    else                          m = bestMoveMedium(moves);
+    place(m[0], m[1], aiColor, () => { advanceTurn(); });
+  }, delay);
+}
+
+canvas.addEventListener('click', e => {
+  if (over || turn !== pColor || aiScheduled || animFlipping) return;
+  const cell = cellAt(e.clientX, e.clientY);
+  if (!cell) return;
+  const [r, c] = cell;
+  if (getFlipped(r, c, pColor).length === 0) return;
+  place(r, c, pColor, () => { advanceTurn(); });
+});
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (over || turn !== pColor || aiScheduled || animFlipping) return;
+  const t = e.changedTouches[0];
+  const cell = cellAt(t.clientX, t.clientY);
+  if (!cell) return;
+  const [r, c] = cell;
+  if (getFlipped(r, c, pColor).length === 0) return;
+  place(r, c, pColor, () => { advanceTurn(); });
+});
+
+function cellAt(px, py) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (px - rect.left) * (canvas.width  / rect.width);
+  const y = (py - rect.top)  * (canvas.height / rect.height);
+  const c = Math.floor(x / CELL);
+  const r = Math.floor(y / CELL);
+  return (r >= 0 && r < N && c >= 0 && c < N) ? [r, c] : null;
+}
+
+function draw(flipProgress, flipCells, flipShowAs) {
+  const px = canvas.width;
+  ctx.clearRect(0, 0, px, px);
+
+  const bg = ctx.createLinearGradient(0, 0, px, px);
+  bg.addColorStop(0, '#2e8b57');
+  bg.addColorStop(1, '#1a5c38');
+  ctx.fillStyle = bg;
+  rrect(0, 0, px, px, 10);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i <= N; i++) {
+    const xy = i * CELL;
+    ln(xy, 0, xy, px);
+    ln(0, xy, px, xy);
+  }
+
+  const validMoves = (!over && turn === pColor && !aiScheduled && !animFlipping)
+    ? getValidMoves(pColor) : [];
+  const hintColor = pColor === BLACK ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+  for (const [vr, vc] of validMoves) {
+    const x = vc * CELL + CELL / 2;
+    const y = vr * CELL + CELL / 2;
+    ctx.fillStyle = hintColor;
+    ctx.beginPath();
+    ctx.arc(x, y, CELL * 0.17, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const flipSet = new Set();
+  if (flipCells) for (const [fr, fc] of flipCells) flipSet.add(fr * N + fc);
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (board[r][c] === EMPTY) continue;
+      const key = r * N + c;
+      if (flipSet.has(key) && flipProgress !== undefined) {
+        const scale = 1 - Math.abs(flipProgress - 0.5) * 1.6;
+        drawStoneScaled(r, c, flipShowAs, Math.max(0.05, scale));
+      } else {
+        drawStone(r, c, board[r][c], 1);
+      }
+    }
+  }
+
+  if (lastMove) {
+    const [lr, lc] = lastMove;
+    const x = lc * CELL + CELL / 2;
+    const y = lr * CELL + CELL / 2;
+    ctx.fillStyle = board[lr][lc] === BLACK ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.arc(x, y, SR * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawStone(r, c, color, alpha) {
+  const x = c * CELL + CELL / 2;
+  const y = r * CELL + CELL / 2;
+  drawStoneAt(x, y, color, SR, alpha);
+}
+
+function drawStoneScaled(r, c, color, scale) {
+  const x = c * CELL + CELL / 2;
+  const y = r * CELL + CELL / 2;
+  drawStoneAt(x, y, color, SR * scale, 1);
+}
+
+function drawStoneAt(x, y, color, r, alpha) {
+  ctx.save();
+  ctx.globalAlpha = 0.38 * alpha;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath(); ctx.arc(x + 2, y + 3, r, 0, Math.PI * 2); ctx.fill();
+
+  const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r);
+  if (color === BLACK) {
+    g.addColorStop(0, '#636363'); g.addColorStop(0.5, '#181818'); g.addColorStop(1, '#090909');
+  } else {
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#f0f0f0'); g.addColorStop(1, '#cccccc');
+  }
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle   = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+
+  const hl = ctx.createRadialGradient(x - r * 0.27, y - r * 0.32, 0, x - r * 0.27, y - r * 0.32, r * 0.52);
+  hl.addColorStop(0, color === BLACK ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.72)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hl;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function rrect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+function ln(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+
+function showResult(r, b, w) {
+  const [badge, cls, sub] =
+    r === 'win'  ? ['승리!',  'c-win',  `흑 ${b} : 백 ${w}`] :
+    r === 'lose' ? ['패배',   'c-lose', `흑 ${b} : 백 ${w}`] :
+                   ['무승부', 'c-draw', `흑 ${b} : 백 ${w} — 동점!`];
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">게임 종료</div>
+    <div class="ov-badge ${cls}">${badge}</div>
+    <div class="ov-sub">${sub}</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-g" onclick="showColorScreen()">같은 난이도로</button>
+      <button class="btn btn-sm" onclick="showDiffScreen()">난이도 변경</button>
+    </div>`;
+}
+
+resize();
+window.addEventListener('resize', resize);
+showDiffScreen();
+</script>
+</body>
+</html>
