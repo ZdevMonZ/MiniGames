@@ -1,129 +1,538 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Finance Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<style>
-body{font-family:Arial, sans-serif;background:#f4f6fb;margin:0;padding:40px}
-.container{max-width:900px;margin:auto}
-.card{background:white;border-radius:16px;padding:30px;box-shadow:0 10px 25px rgba(0,0,0,0.08);margin-bottom:30px}
-.formula{font-size:28px;text-align:center}
-.slider-group{margin-top:20px}
-label{display:block;margin-bottom:6px;font-weight:600}
-.value{font-weight:400;margin-left:10px;color:#4f6df5}
-input[type=range]{width:100%}
-input[type=number]{padding:8px;border-radius:8px;border:1px solid #ccc;width:200px}
-.result{margin-top:20px;font-size:24px;text-align:center;font-weight:bold;color:#16a34a}
-.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.button{padding:10px 16px;background:#4f6df5;color:white;border:none;border-radius:10px;cursor:pointer;text-decoration:none}
-.footer{text-align:center;margin-top:40px;color:#888;font-size:14px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Mini Games Web Platform Mockup</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      background: #F2F2F7;
+      color: #111;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 데스크톱: 모바일 프레임으로 표시 */
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .phone {
+      width: 390px;
+      background: #FFFFFF;
+      border-radius: 32px;
+      border: 0.5px solid rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 모바일: 풀스크린 */
+    @media (max-width: 480px) {
+      .stage {
+        padding: 0;
+      }
+      .phone {
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        min-height: 100vh;
+      }
+    }
+
+    /* 상태바 */
+    .status-bar {
+      height: 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 500;
+      color: #111;
+    }
+    .status-bar .right {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .status-bar .battery {
+      background: #34C759;
+      color: white;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* 상단 탭 */
+    .top-tabs {
+      padding: 8px 20px 0;
+      display: flex;
+      gap: 24px;
+      border-bottom: 0.5px solid #EEE;
+    }
+    .top-tabs .tab {
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 400;
+      color: #999;
+      cursor: pointer;
+    }
+    .top-tabs .tab.active {
+      font-weight: 500;
+      color: #111;
+      border-bottom: 2px solid #111;
+    }
+
+    /* 페이지 인디케이터 */
+    .page-dots {
+      padding: 12px 0;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .page-dots .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #DDD;
+    }
+    .page-dots .dot.active {
+      background: #6366F1;
+    }
+
+    /* 섹션 헤더 */
+    .section-header {
+      padding: 8px 20px 4px;
+      font-size: 18px;
+      font-weight: 500;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-header .emoji {
+      font-size: 16px;
+    }
+
+    /* 게임 그리드 */
+    .game-grid {
+      padding: 14px 20px 28px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .game-card {
+      cursor: pointer;
+    }
+    .game-card .thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.15s ease;
+    }
+    .game-card:active .thumb {
+      transform: scale(0.97);
+    }
+    .game-card .thumb-content {
+      text-align: center;
+      color: white;
+      font-weight: 700;
+    }
+    .game-card .thumb-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+    .game-card .thumb-label {
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .game-card .thumb-label-lg {
+      font-size: 24px;
+      line-height: 1;
+    }
+    .game-card .thumb-label-sm {
+      font-size: 12px;
+      margin-top: 6px;
+      opacity: 0.9;
+    }
+    .game-card .badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      color: white;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .game-card .badge.new { background: #FF3366; }
+    .game-card .badge.update { background: #6366F1; }
+
+    .game-card .title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+    .game-card .meta {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* 썸네일 컬러 변형 */
+    .thumb-pacman {
+      background: radial-gradient(ellipse at 30% 50%, #1a1400 0%, #000 100%);
+    }
+    .thumb-pacman .pacman-scene {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .thumb-pacman .pacman-body {
+      width: 66px;
+      height: 66px;
+      background: #FFE066;
+      border-radius: 50%;
+      clip-path: polygon(50% 50%, 100% 22%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 78%);
+      box-shadow: 0 0 18px rgba(255,224,102,0.5);
+    }
+    .thumb-pacman .pacman-dots {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .thumb-pacman .pacman-dots span {
+      display: block;
+      width: 10px;
+      height: 10px;
+      background: #FFE066;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(255,224,102,0.6);
+    }
+    .thumb-snake {
+      background: #1A1A2E;
+    }
+    .thumb-snake .thumb-content {
+      color: #FFE066;
+      font-family: monospace;
+    }
+    .thumb-snake .thumb-icon {
+      letter-spacing: 1.5px;
+    }
+    .thumb-galaga {
+      background: radial-gradient(ellipse at 50% 40%, #001540 0%, #000010 100%);
+      overflow: hidden;
+    }
+    .thumb-galaga .thumb-icon {
+      font-size: 58px;
+      line-height: 1;
+      filter: drop-shadow(0 0 10px rgba(136,204,255,0.7));
+    }
+    .thumb-galaga .thumb-label {
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: #88CCFF;
+      margin-top: 8px;
+      text-shadow: 0 0 8px rgba(136,204,255,0.8);
+    }
+    .thumb-mushroom {
+      background: linear-gradient(135deg, #FFE5B4, #FF9966);
+    }
+    .thumb-tetris {
+      background: linear-gradient(135deg, #B8E0D2, #5FAD8E);
+    }
+    .thumb-space {
+      background: linear-gradient(135deg, #2D1B4E, #6B4FBB);
+    }
+    .thumb-space .thumb-content {
+      color: #FFD700;
+    }
+    .thumb-pong {
+      background: linear-gradient(135deg, #FFCAD4, #E8829F);
+    }
+    .thumb-2048 {
+      background: linear-gradient(145deg, #0D0820 0%, #1E1050 100%);
+    }
+    .thumb-2048 .tile-preview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      width: 114px;
+    }
+    .thumb-2048 .tp {
+      border-radius: 7px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+    }
+    .thumb-2048 .tp-2   { background: #EEE4DA; color: #776E65; }
+    .thumb-2048 .tp-64  { background: #F65E3B; color: #fff; }
+    .thumb-2048 .tp-512 { background: #EDC850; color: #fff; }
+    .thumb-2048 .tp-2048 {
+      background: #EDC22E; color: #fff;
+      font-size: 12px;
+      box-shadow: 0 0 12px rgba(237,194,46,0.7);
+    }
+    .thumb-brick {
+      background: linear-gradient(135deg, #A8E6CF, #4FB286);
+    }
+    .thumb-bubble {
+      background: linear-gradient(135deg, #FFAFBD, #FFC371);
+    }
+
+    /* 하단 네비게이션 */
+    .bottom-nav {
+      border-top: 0.5px solid #EEE;
+      padding: 8px 0 24px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      position: sticky;
+      bottom: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .nav-item.disabled {
+      opacity: 0.4;
+    }
+    .nav-icon {
+      font-size: 22px;
+      position: relative;
+    }
+    .nav-icon .dot {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      width: 6px;
+      height: 6px;
+      background: #FF3366;
+      border-radius: 50%;
+    }
+    .nav-label {
+      font-size: 10px;
+      color: #444;
+    }
+    .nav-item.active .nav-label {
+      color: #111;
+      font-weight: 500;
+    }
+    .nav-item.disabled .nav-label {
+      color: #999;
+    }
+    .profile-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFD3E1, #FF9EC0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
 
-<div class="nav">
-<h1>Finance Visualizer</h1>
-<a href="npv.html" class="button">Multiple Cash Flow Tool →</a>
+<div class="stage">
+  <div class="phone">
+
+    <!-- 상태바 -->
+    <div class="status-bar">
+      <span>1:56</span>
+      <div class="right">
+        <span style="font-size: 11px;">●●●●</span>
+        <span style="font-size: 11px;">📶</span>
+        <span class="battery">59</span>
+      </div>
+    </div>
+
+    <!-- 상단 탭 -->
+    <div class="top-tabs">
+      <div class="tab active">For You</div>
+      <div class="tab">TOP CHART</div>
+      <div class="tab">NOW TRENDING</div>
+    </div>
+
+    <!-- 페이지 인디케이터 -->
+    <div class="page-dots">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <!-- 섹션: 레트로 게임 모음 -->
+    <div class="section-header">
+      레트로 게임 모음 <span class="emoji">🕹️</span>
+    </div>
+
+    <div class="game-grid">
+
+      <div class="game-card" onclick="window.location.href='games/pacman.html'">
+        <div class="thumb thumb-pacman">
+          <span class="badge new">NEW</span>
+          <div class="pacman-scene">
+            <div class="pacman-body"></div>
+            <div class="pacman-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+        <div class="title">Pac Man</div>
+        <div class="meta"><span>👍 95%</span><span>👤 2.1M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/galaga.html'">
+        <div class="thumb thumb-galaga">
+          <span class="badge new">NEW</span>
+          <div class="thumb-content">
+            <div class="thumb-icon">👾</div>
+            <div class="thumb-label">GALAGA</div>
+          </div>
+        </div>
+        <div class="title">Galaga</div>
+        <div class="meta"><span>👍 93%</span><span>👤 1.4M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/2048.html'">
+        <div class="thumb thumb-2048">
+          <div class="tile-preview">
+            <div class="tp tp-2">2</div>
+            <div class="tp tp-64">64</div>
+            <div class="tp tp-512">512</div>
+            <div class="tp tp-2048">2048</div>
+          </div>
+        </div>
+        <div class="title">2048</div>
+        <div class="meta"><span>👍 94%</span><span>👤 2.5M</span></div>
+      </div>
+
+      <div class="game-card">
+        <div class="thumb thumb-space">
+          <span class="badge new">NEW</span>
+          <div class="thumb-content">
+            <div class="thumb-label-lg">SPACE</div>
+            <div class="thumb-label-sm">INVADER</div>
+          </div>
+        </div>
+        <div class="title">Galaxy Shoot</div>
+        <div class="meta"><span>👍 89%</span><span>👤 760K</span></div>
+      </div>
+
+      <div class="game-card">
+        <div class="thumb thumb-pong">
+          <div class="thumb-content">
+            <div class="thumb-icon">🏓</div>
+            <div class="thumb-label">PONG</div>
+          </div>
+        </div>
+        <div class="title">Mini Pong</div>
+        <div class="meta"><span>👍 84%</span><span>👤 420K</span></div>
+      </div>
+
+      <div class="game-card">
+        <div class="thumb thumb-tetris">
+          <div class="thumb-content">
+            <div class="thumb-label-lg">TETRIS</div>
+            <div class="thumb-label-sm">▮▮▮</div>
+          </div>
+        </div>
+        <div class="title">Block Drop</div>
+        <div class="meta"><span>👍 93%</span><span>👤 1.8M</span></div>
+      </div>
+
+      <div class="game-card">
+        <div class="thumb thumb-brick">
+          <div class="thumb-content">
+            <div class="thumb-icon">🧱</div>
+            <div class="thumb-label">BREAKER</div>
+          </div>
+        </div>
+        <div class="title">Brick Smash</div>
+        <div class="meta"><span>👍 87%</span><span>👤 680K</span></div>
+      </div>
+
+      <div class="game-card">
+        <div class="thumb thumb-bubble">
+          <div class="thumb-content">
+            <div class="thumb-icon">🎯</div>
+            <div class="thumb-label">ARCADE</div>
+          </div>
+        </div>
+        <div class="title">Bubble Pop</div>
+        <div class="meta"><span>👍 90%</span><span>👤 1.1M</span></div>
+      </div>
+
+    </div>
+
+    <!-- 하단 네비게이션 -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon">
+          🏠
+          <span class="dot"></span>
+        </div>
+        <div class="nav-label">Home</div>
+      </div>
+      <div class="nav-item disabled">
+        <div class="nav-icon">📡</div>
+        <div class="nav-label">Live</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">
+          ➕
+          <span class="dot"></span>
+        </div>
+        <div class="nav-label">Create</div>
+      </div>
+      <div class="nav-item disabled">
+        <div class="nav-icon">📺</div>
+        <div class="nav-label">Feed</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🌍</div>
+        <div class="nav-label">World</div>
+      </div>
+      <div class="nav-item">
+        <div class="profile-avatar">👤</div>
+        <div class="nav-label">Profile</div>
+      </div>
+    </div>
+
+  </div>
 </div>
-
-<div class="card">
-<h2>Time Value of Money Formula</h2>
-<div class="formula">\\[FV = PV(1+r)^n\\]</div>
-</div>
-
-<div class="card">
-<h2>Investment Growth Graph</h2>
-
-<div class="slider-group">
-<label>PV (현재 투자금)</label>
-<input type="number" id="pv" value="53000">
-</div>
-
-<div class="slider-group">
-<label>Rate % (이자율) <span id="rateValue" class="value"></span></label>
-<input type="range" id="rate" min="1" max="20" step="0.1" value="8.63">
-</div>
-
-<div class="slider-group">
-<label>Years (기간) <span id="yearsValue" class="value"></span></label>
-<input type="range" id="years" min="1" max="40" step="1" value="18">
-</div>
-
-<div class="result" id="result"></div>
-
-<canvas id="chart"></canvas>
-</div>
-
-<div class="footer">
-by Yura Hwang
-</div>
-
-</div>
-
-<script>
-let chart
-
-const pvInput=document.getElementById('pv')
-const rateSlider=document.getElementById('rate')
-const yearsSlider=document.getElementById('years')
-
-function formatNumber(num){
- return num.toLocaleString(undefined,{maximumFractionDigits:0})
-}
-
-function updateValues(){
- document.getElementById('rateValue').textContent=rateSlider.value+"%"
- document.getElementById('yearsValue').textContent=yearsSlider.value
-}
-
-function calculate(){
-const pv=parseFloat(pvInput.value)
-const rate=parseFloat(rateSlider.value)/100
-const years=parseInt(yearsSlider.value)
-
-let values=[]
-let labels=[]
-
-for(let i=0;i<=years;i++){
- let fv=pv*Math.pow(1+rate,i)
- values.push(fv)
- labels.push("Year "+i)
-}
-
-const finalValue=values[values.length-1]
-document.getElementById('result').textContent =
- "미래 가치 (FV): $" + formatNumber(finalValue)
-
-if(chart){chart.destroy()}
-
-chart=new Chart(document.getElementById('chart'),{
- type:'line',
- data:{
- labels:labels,
- datasets:[{
- label:'Future Value Growth',
- data:values,
- borderWidth:2
- }]
- }
-})
-}
-
-function update(){
- updateValues()
- calculate()
-}
-
-pvInput.addEventListener('input',update)
-rateSlider.addEventListener('input',update)
-yearsSlider.addEventListener('input',update)
-
-update()
-</script>
 
 </body>
 </html>
