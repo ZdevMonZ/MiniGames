@@ -327,6 +327,56 @@
       background: linear-gradient(135deg, #FFAFBD, #FFC371);
     }
 
+    /* ── My Phone ── */
+    .thumb-myphone {
+      background: linear-gradient(145deg, #0a0a1a 0%, #1a1a2e 100%);
+    }
+    .phone-scene {
+      width: 54px; height: 88px;
+      background: #111;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.15);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px;
+      box-shadow: 0 0 20px rgba(99,102,241,0.4);
+    }
+    .phone-screen-icon { font-size: 22px; }
+    .phone-lock { font-size: 14px; }
+
+    /* ── Security Corp ── */
+    .thumb-security {
+      background: linear-gradient(145deg, #0d1117 0%, #161b22 100%);
+    }
+    .sec-scene {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .sec-icon { font-size: 40px; filter: drop-shadow(0 0 10px rgba(0,255,136,0.7)); }
+    .sec-bar {
+      width: 80px; height: 5px; border-radius: 3px;
+      background: linear-gradient(90deg, #00ff88 60%, rgba(0,255,136,0.15) 60%);
+      box-shadow: 0 0 8px rgba(0,255,136,0.5);
+    }
+
+    /* ── Sokoban ── */
+    .thumb-sokoban {
+      background: linear-gradient(145deg, #2d1b00 0%, #1a0f00 100%);
+    }
+    .sok-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 4px; width: 100px;
+    }
+    .sok-cell {
+      height: 22px; border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+    .sok-wall { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+    .sok-empty { background: rgba(255,255,255,0.04); }
+    .sok-box  { background: rgba(255,167,38,0.4); border: 1px solid rgba(255,167,38,0.7); }
+    .sok-goal { background: rgba(255,82,82,0.2); border: 1px solid rgba(255,82,82,0.5); }
+    .sok-player { background: rgba(99,102,241,0.35); border: 1px solid rgba(99,102,241,0.7); }
+
     /* ── Pinball ── */
     .thumb-pinball {
       background: linear-gradient(180deg, #08001e 0%, #180050 60%, #0a002e 100%);
@@ -702,6 +752,53 @@
         </div>
         <div class="title">오셀로</div>
         <div class="meta"><span>👍 92%</span><span>👤 1.7M</span></div>
+      </div>
+
+    </div>
+
+    <!-- 섹션: 추리/방탈출 -->
+    <div class="section-header">
+      추리 &amp; 방탈출 <span class="emoji">🔍</span>
+    </div>
+
+    <div class="game-grid">
+
+      <div class="game-card" onclick="window.location.href='games/my_phone.html'">
+        <div class="thumb thumb-myphone">
+          <span class="badge new">NEW</span>
+          <div class="phone-scene">
+            <div class="phone-screen-icon">📱</div>
+            <div class="phone-lock">🔐</div>
+          </div>
+        </div>
+        <div class="title">내 폰을 찾아라</div>
+        <div class="meta"><span>👍 89%</span><span>👤 540K</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/security_corp.html'">
+        <div class="thumb thumb-security">
+          <span class="badge new">NEW</span>
+          <div class="sec-scene">
+            <div class="sec-icon">🛡️</div>
+            <div class="sec-bar"></div>
+          </div>
+        </div>
+        <div class="title">시큐리티 코프</div>
+        <div class="meta"><span>👍 91%</span><span>👤 620K</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/sokoban.html'">
+        <div class="thumb thumb-sokoban">
+          <span class="badge new">NEW</span>
+          <div class="sok-grid">
+            <div class="sok-wall"></div><div class="sok-wall"></div><div class="sok-wall"></div><div class="sok-wall"></div>
+            <div class="sok-wall"></div><div class="sok-player">🧍</div><div class="sok-empty"></div><div class="sok-wall"></div>
+            <div class="sok-wall"></div><div class="sok-box">📦</div><div class="sok-goal">❎</div><div class="sok-wall"></div>
+            <div class="sok-wall"></div><div class="sok-wall"></div><div class="sok-wall"></div><div class="sok-wall"></div>
+          </div>
+        </div>
+        <div class="title">소코반</div>
+        <div class="meta"><span>👍 93%</span><span>👤 810K</span></div>
       </div>
 
     </div>
