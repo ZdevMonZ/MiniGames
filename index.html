@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>제페토 월드 플랫폼 - Mockup</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      background: #F2F2F7;
+      color: #111;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 데스크톱: 모바일 프레임으로 표시 */
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .phone {
+      width: 390px;
+      background: #FFFFFF;
+      border-radius: 32px;
+      border: 0.5px solid rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 모바일: 풀스크린 */
+    @media (max-width: 480px) {
+      .stage {
+        padding: 0;
+      }
+      .phone {
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        min-height: 100vh;
+      }
+    }
+
+    /* 상태바 */
+    .status-bar {
+      height: 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 500;
+      color: #111;
+    }
+    .status-bar .right {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .status-bar .battery {
+      background: #34C759;
+      color: white;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* 상단 탭 */
+    .top-tabs {
+      padding: 8px 20px 0;
+      display: flex;
+      gap: 24px;
+      border-bottom: 0.5px solid #EEE;
+    }
+    .top-tabs .tab {
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 400;
+      color: #999;
+      cursor: pointer;
+    }
+    .top-tabs .tab.active {
+      font-weight: 500;
+      color: #111;
+      border-bottom: 2px solid #111;
+    }
+
+    /* 페이지 인디케이터 */
+    .page-dots {
+      padding: 12px 0;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .page-dots .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #DDD;
+    }
+    .page-dots .dot.active {
+      background: #6366F1;
+    }
+
+    /* 섹션 헤더 */
+    .section-header {
+      padding: 8px 20px 4px;
+      font-size: 18px;
+      font-weight: 500;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-header .emoji {
+      font-size: 16px;
+    }
+
+    /* 게임 그리드 */
+    .game-grid {
+      padding: 14px 20px 28px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .game-card {
+      cursor: pointer;
+    }
+    .game-card .thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.15s ease;
+    }
+    .game-card:active .thumb {
+      transform: scale(0.97);
+    }
+    .game-card .thumb-content {
+      text-align: center;
+      color: white;
+      font-weight: 700;
+    }
+    .game-card .thumb-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+    .game-card .thumb-label {
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .game-card .thumb-label-lg {
+      font-size: 24px;
+      line-height: 1;
+    }
+    .game-card .thumb-label-sm {
+      font-size: 12px;
+      margin-top: 6px;
+      opacity: 0.9;
+    }
+    .game-card .badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      color: white;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .game-card .badge.new { background: #FF3366; }
+    .game-card .badge.update { background: #6366F1; }
+
+    .game-card .title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+    .game-card .meta {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* 썸네일 컬러 변형 */
+    .thumb-pacman {
+      background: radial-gradient(ellipse at 30% 50%, #1a1400 0%, #000 100%);
+    }
+    .thumb-pacman .pacman-scene {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .thumb-pacman .pacman-body {
+      width: 66px;
+      height: 66px;
+      background: #FFE066;
+      border-radius: 50%;
+      clip-path: polygon(50% 50%, 100% 22%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 78%);
+      box-shadow: 0 0 18px rgba(255,224,102,0.5);
+    }
+    .thumb-pacman .pacman-dots {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .thumb-pacman .pacman-dots span {
+      display: block;
+      width: 10px;
+      height: 10px;
+      background: #FFE066;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(255,224,102,0.6);
+    }
+    .thumb-snake {
+      background: #1A1A2E;
+    }
+    .thumb-snake .thumb-content {
+      color: #FFE066;
+      font-family: monospace;
+    }
+    .thumb-snake .thumb-icon {
+      letter-spacing: 1.5px;
+    }
+    .thumb-galaga {
+      background: radial-gradient(ellipse at 50% 40%, #001540 0%, #000010 100%);
+      overflow: hidden;
+    }
+    .thumb-galaga .thumb-icon {
+      font-size: 58px;
+      line-height: 1;
+      filter: drop-shadow(0 0 10px rgba(136,204,255,0.7));
+    }
+    .thumb-galaga .thumb-label {
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: #88CCFF;
+      margin-top: 8px;
+      text-shadow: 0 0 8px rgba(136,204,255,0.8);
+    }
+    .thumb-mushroom {
+      background: linear-gradient(135deg, #FFE5B4, #FF9966);
+    }
+    .thumb-tetris {
+      background: linear-gradient(135deg, #B8E0D2, #5FAD8E);
+    }
+    .thumb-space {
+      background: linear-gradient(135deg, #2D1B4E, #6B4FBB);
+    }
+    .thumb-space .thumb-content {
+      color: #FFD700;
+    }
+    .thumb-pong {
+      background: linear-gradient(135deg, #FFCAD4, #E8829F);
+    }
+    .thumb-2048 {
+      background: linear-gradient(145deg, #0D0820 0%, #1E1050 100%);
+    }
+    .thumb-2048 .tile-preview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      width: 114px;
+    }
+    .thumb-2048 .tp {
+      border-radius: 7px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+    }
+    .thumb-2048 .tp-2   { background: #EEE4DA; color: #776E65; }
+    .thumb-2048 .tp-64  { background: #F65E3B; color: #fff; }
+    .thumb-2048 .tp-512 { background: #EDC850; color: #fff; }
+    .thumb-2048 .tp-2048 {
+      background: #EDC22E; color: #fff;
+      font-size: 12px;
+      box-shadow: 0 0 12px rgba(237,194,46,0.7);
+    }
+    .thumb-brick {
+      background: linear-gradient(145deg, #080018 0%, #120028 100%);
+      overflow: hidden;
+    }
+    .brick-scene {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 5px; width: 100%;
+    }
+    .brick-rows { display: flex; flex-direction: column; gap: 4px; width: 118px; }
+    .brick-row  { display: flex; gap: 4px; }
+    .br { flex: 1; height: 11px; border-radius: 3px; }
+    .br-r { background: #FF5252; box-shadow: 0 0 4px rgba(255,82,82,0.6); }
+    .br-o { background: #FFA726; box-shadow: 0 0 4px rgba(255,167,38,0.5); }
+    .br-y { background: #FFEE58; box-shadow: 0 0 4px rgba(255,238,88,0.5); }
+    .brick-ball {
+      font-size: 14px; color: #fff;
+      text-shadow: 0 0 8px rgba(255,255,255,0.9);
+      align-self: flex-end; margin-right: 18px;
+    }
+    .brick-paddle {
+      width: 58px; height: 8px;
+      background: linear-gradient(90deg, #90CAF9, #E0F0FF);
+      border-radius: 4px; box-shadow: 0 0 10px rgba(136,204,255,0.7);
+    }
+    .thumb-bubble {
+      background: linear-gradient(135deg, #FFAFBD, #FFC371);
+    }
+
+    /* ── Pinball ── */
+    .thumb-pinball {
+      background: linear-gradient(180deg, #08001e 0%, #180050 60%, #0a002e 100%);
+      overflow: hidden;
+    }
+    .pb-scene {
+      position: relative; width: 76px; height: 114px;
+      background: rgba(0,0,0,0.25);
+      border: 1.5px solid rgba(102,126,234,0.3);
+      border-radius: 8px 8px 30px 30px;
+      overflow: hidden;
+    }
+    /* side rail lines */
+    .pb-scene::before, .pb-scene::after {
+      content: ''; position: absolute; top: 0; bottom: 22px; width: 2px;
+      background: linear-gradient(180deg, rgba(102,126,234,0.5), rgba(102,126,234,0.1));
+    }
+    .pb-scene::before { left: 6px; }
+    .pb-scene::after  { right: 6px; }
+    .pb-bumper {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 38% 34%, #00e5ff, #006fa8);
+      box-shadow: 0 0 10px rgba(0,229,255,0.8);
+    }
+    .pb-ball {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff, #aaaaaa 75%);
+      box-shadow: 0 0 8px rgba(255,255,255,0.85);
+    }
+    .pb-flipper {
+      position: absolute; height: 7px; border-radius: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      box-shadow: 0 0 8px rgba(102,126,234,0.7);
+    }
+    .pb-flipper.l { width: 28px; left: 8px;  bottom: 9px; transform-origin: left center;  transform: rotate(-24deg); }
+    .pb-flipper.r { width: 28px; right: 8px; bottom: 9px; transform-origin: right center; transform: rotate(24deg); }
+    .pb-drain { position: absolute; bottom: 0; left: 0; right: 0; height: 9px; background: rgba(255,60,60,0.12); }
+
+    /* ── Memory Card ── */
+    .thumb-memory {
+      background: linear-gradient(145deg, #1a0a3a 0%, #0d0520 100%);
+    }
+    .mem-two {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .mem-big {
+      width: 54px; height: 76px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mem-big-back {
+      background-color: #1a1535;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(102,126,234,0.22) 0, rgba(102,126,234,0.22) 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(-45deg, rgba(102,126,234,0.22) 0, rgba(102,126,234,0.22) 1px, transparent 0, transparent 50%);
+      background-size: 10px 10px;
+      border: 2px solid rgba(102,126,234,0.45);
+      box-shadow: 0 4px 12px rgba(102,126,234,0.2);
+    }
+    .mem-big-front {
+      background: linear-gradient(135deg, #2d1b69, #11998e);
+      border: 2px solid rgba(255,255,255,0.2);
+      font-size: 28px;
+      box-shadow: 0 4px 14px rgba(17,153,142,0.35);
+    }
+
+    /* ── Minesweeper ── */
+    .thumb-mine {
+      background: linear-gradient(145deg, #1e2540 0%, #111828 100%);
+    }
+    .mine-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 3px; width: 110px;
+    }
+    .ms {
+      height: 20px; border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+    }
+    .ms-h { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+    .ms-r { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+    .ms-f { background: rgba(255,183,0,0.2); border: 1px solid rgba(255,183,0,0.5); font-size:12px; }
+    .ms-mine { background: rgba(255,60,60,0.28); border: 1px solid rgba(255,60,60,0.55); font-size:11px; }
+    .ms-1 { color: #4fc3f7; } .ms-2 { color: #81c784; } .ms-3 { color: #e57373; }
+
+    /* ── Othello ── */
+    .thumb-othello {
+      background: linear-gradient(145deg, #2e8b57 0%, #1a5c38 100%);
+    }
+    .oth-board {
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 3px; width: 114px;
+    }
+    .oth-cell {
+      height: 17px; border-radius: 2px;
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .oth-b, .oth-w, .oth-hint { border-radius: 50%; }
+    .oth-b {
+      width: 11px; height: 11px;
+      background: radial-gradient(circle at 35% 30%, #555, #090909 75%);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+    .oth-w {
+      width: 11px; height: 11px;
+      background: radial-gradient(circle at 35% 30%, #fff, #ccc 75%);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+    .oth-hint { width: 7px; height: 7px; background: rgba(255,255,255,0.28); }
+    .thumb-gomoku {
+      background: linear-gradient(145deg, #c8894a 0%, #a0622a 100%);
+      overflow: hidden;
+    }
+    .gomoku-board {
+      position: relative;
+      width: 108px; height: 108px;
+    }
+    .go-h, .go-v { position: absolute; background: rgba(0,0,0,0.38); }
+    .go-h { height: 0.8px; left: 0; right: 0; }
+    .go-v { width: 0.8px; top: 0; bottom: 0; }
+    .go-s {
+      position: absolute;
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .go-s.b { background: radial-gradient(circle at 35% 30%, #636363, #090909 75%); box-shadow: 1px 2px 5px rgba(0,0,0,0.6); }
+    .go-s.w { background: radial-gradient(circle at 35% 30%, #ffffff, #cbcbcb 75%); box-shadow: 1px 2px 4px rgba(0,0,0,0.35); }
+    .go-s.b.gg { box-shadow: 1px 2px 5px rgba(0,0,0,0.7), 0 0 10px rgba(255,155,0,0.65); }
+
+    /* 하단 네비게이션 */
+    .bottom-nav {
+      border-top: 0.5px solid #EEE;
+      padding: 8px 0 24px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      position: sticky;
+      bottom: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .nav-item.disabled {
+      opacity: 0.4;
+    }
+    .nav-icon {
+      font-size: 22px;
+      position: relative;
+    }
+    .nav-icon .dot {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      width: 6px;
+      height: 6px;
+      background: #FF3366;
+      border-radius: 50%;
+    }
+    .nav-label {
+      font-size: 10px;
+      color: #444;
+    }
+    .nav-item.active .nav-label {
+      color: #111;
+      font-weight: 500;
+    }
+    .nav-item.disabled .nav-label {
+      color: #999;
+    }
+    .profile-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFD3E1, #FF9EC0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+
+    <!-- 상태바 -->
+    <div class="status-bar">
+      <span>1:56</span>
+      <div class="right">
+        <span style="font-size: 11px;">●●●●</span>
+        <span style="font-size: 11px;">📶</span>
+        <span class="battery">59</span>
+      </div>
+    </div>
+
+    <!-- 상단 탭 -->
+    <div class="top-tabs">
+      <div class="tab active">For You</div>
+      <div class="tab">TOP CHART</div>
+      <div class="tab">NOW TRENDING</div>
+    </div>
+
+    <!-- 페이지 인디케이터 -->
+    <div class="page-dots">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <!-- 섹션: 레트로 게임 모음 -->
+    <div class="section-header">
+      레트로 게임 모음 <span class="emoji">🕹️</span>
+    </div>
+
+    <div class="game-grid">
+
+      <div class="game-card" onclick="window.location.href='games/pacman.html'">
+        <div class="thumb thumb-pacman">
+          <span class="badge new">NEW</span>
+          <div class="pacman-scene">
+            <div class="pacman-body"></div>
+            <div class="pacman-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+        <div class="title">Pac Man</div>
+        <div class="meta"><span>👍 95%</span><span>👤 2.1M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/galaga.html'">
+        <div class="thumb thumb-galaga">
+          <span class="badge new">NEW</span>
+          <div class="thumb-content">
+            <div class="thumb-icon">👾</div>
+            <div class="thumb-label">GALAGA</div>
+          </div>
+        </div>
+        <div class="title">Galaga</div>
+        <div class="meta"><span>👍 93%</span><span>👤 1.4M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/breakout.html'">
+        <div class="thumb thumb-brick">
+          <span class="badge new">NEW</span>
+          <div class="brick-scene">
+            <div class="brick-rows">
+              <div class="brick-row"><div class="br br-r"></div><div class="br br-r"></div><div class="br br-r"></div></div>
+              <div class="brick-row"><div class="br br-o"></div><div class="br br-o"></div><div class="br br-o"></div></div>
+              <div class="brick-row"><div class="br br-y"></div><div class="br br-y"></div><div class="br br-y"></div></div>
+            </div>
+            <div class="brick-ball">⚪</div>
+            <div class="brick-paddle"></div>
+          </div>
+        </div>
+        <div class="title">Brick Smash</div>
+        <div class="meta"><span>👍 91%</span><span>👤 1.2M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/gomoku.html'">
+        <div class="thumb thumb-gomoku">
+          <span class="badge new">NEW</span>
+          <div class="gomoku-board">
+            <!-- 5×5 grid lines (10, 29, 48, 67, 86 px) -->
+            <div class="go-h" style="top:10px"></div>
+            <div class="go-h" style="top:29px"></div>
+            <div class="go-h" style="top:48px"></div>
+            <div class="go-h" style="top:67px"></div>
+            <div class="go-h" style="top:86px"></div>
+            <div class="go-v" style="left:10px"></div>
+            <div class="go-v" style="left:29px"></div>
+            <div class="go-v" style="left:48px"></div>
+            <div class="go-v" style="left:67px"></div>
+            <div class="go-v" style="left:86px"></div>
+            <!-- 흑 대각 4연속 (승리 직전, 골드 글로우) -->
+            <div class="go-s b gg" style="top:10px;left:10px"></div>
+            <div class="go-s b gg" style="top:29px;left:29px"></div>
+            <div class="go-s b gg" style="top:48px;left:48px"></div>
+            <div class="go-s b gg" style="top:67px;left:67px"></div>
+            <!-- 백 돌 (방어 시도) -->
+            <div class="go-s w" style="top:10px;left:67px"></div>
+            <div class="go-s w" style="top:67px;left:29px"></div>
+            <div class="go-s w" style="top:48px;left:86px"></div>
+            <!-- 추가 흑 돌 -->
+            <div class="go-s b" style="top:29px;left:86px"></div>
+          </div>
+        </div>
+        <div class="title">오목</div>
+        <div class="meta"><span>👍 96%</span><span>👤 3.2M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/2048.html'">
+        <div class="thumb thumb-2048">
+          <div class="tile-preview">
+            <div class="tp tp-2">2</div>
+            <div class="tp tp-64">64</div>
+            <div class="tp tp-512">512</div>
+            <div class="tp tp-2048">2048</div>
+          </div>
+        </div>
+        <div class="title">2048</div>
+        <div class="meta"><span>👍 94%</span><span>👤 2.5M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/pinball.html'">
+        <div class="thumb thumb-pinball">
+          <span class="badge new">NEW</span>
+          <div class="pb-scene">
+            <!-- top row bumpers -->
+            <div class="pb-bumper" style="width:16px;height:16px;top:10px;left:12px"></div>
+            <div class="pb-bumper" style="width:18px;height:18px;top:8px;left:29px"></div>
+            <div class="pb-bumper" style="width:16px;height:16px;top:10px;left:46px"></div>
+            <!-- middle row bumpers (diamond) -->
+            <div class="pb-bumper" style="width:14px;height:14px;top:32px;left:20px;background:radial-gradient(circle at 38% 34%,#ff6bdc,#8b0057);box-shadow:0 0 10px rgba(255,107,220,0.8)"></div>
+            <div class="pb-bumper" style="width:14px;height:14px;top:32px;left:40px;background:radial-gradient(circle at 38% 34%,#ffd93d,#8b6000);box-shadow:0 0 10px rgba(255,217,61,0.8)"></div>
+            <!-- ball -->
+            <div class="pb-ball" style="width:10px;height:10px;top:60px;left:33px"></div>
+            <!-- flippers -->
+            <div class="pb-flipper l"></div>
+            <div class="pb-flipper r"></div>
+            <div class="pb-drain"></div>
+          </div>
+        </div>
+        <div class="title">핀볼</div>
+        <div class="meta"><span>👍 91%</span><span>👤 1.3M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/memory.html'">
+        <div class="thumb thumb-memory">
+          <span class="badge new">NEW</span>
+          <div class="mem-two">
+            <div class="mem-big mem-big-back"></div>
+            <div class="mem-big mem-big-front">🎮</div>
+          </div>
+        </div>
+        <div class="title">카드 뒤집기</div>
+        <div class="meta"><span>👍 88%</span><span>👤 980K</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/minesweeper.html'">
+        <div class="thumb thumb-mine">
+          <span class="badge new">NEW</span>
+          <div class="mine-grid">
+            <div class="ms ms-r ms-1">1</div><div class="ms ms-r ms-1">1</div><div class="ms ms-r ms-2">2</div><div class="ms ms-r ms-1">1</div><div class="ms ms-r ms-1">1</div>
+            <div class="ms ms-r ms-1">1</div><div class="ms ms-mine">💣</div><div class="ms ms-r ms-3">3</div><div class="ms ms-mine">💣</div><div class="ms ms-r ms-1">1</div>
+            <div class="ms ms-r ms-2">2</div><div class="ms ms-r ms-3">3</div><div class="ms ms-mine">💣</div><div class="ms ms-r ms-3">3</div><div class="ms ms-r ms-2">2</div>
+            <div class="ms ms-f">🚩</div><div class="ms ms-h"></div><div class="ms ms-h"></div><div class="ms ms-h"></div><div class="ms ms-f">🚩</div>
+          </div>
+        </div>
+        <div class="title">지뢰찾기</div>
+        <div class="meta"><span>👍 95%</span><span>👤 4.1M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/othello.html'">
+        <div class="thumb thumb-othello">
+          <span class="badge new">NEW</span>
+          <div class="oth-board">
+            <div class="oth-cell"></div><div class="oth-cell"><div class="oth-hint"></div></div><div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div>
+            <div class="oth-cell"><div class="oth-hint"></div></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"><div class="oth-hint"></div></div><div class="oth-cell"></div>
+            <div class="oth-cell"></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"><div class="oth-w"></div></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"></div><div class="oth-cell"></div>
+            <div class="oth-cell"></div><div class="oth-cell"><div class="oth-hint"></div></div><div class="oth-cell"><div class="oth-b"></div></div><div class="oth-cell"><div class="oth-w"></div></div><div class="oth-cell"><div class="oth-w"></div></div><div class="oth-cell"></div>
+            <div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"><div class="oth-hint"></div></div><div class="oth-cell"><div class="oth-w"></div></div><div class="oth-cell"></div><div class="oth-cell"></div>
+            <div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div><div class="oth-cell"></div>
+          </div>
+        </div>
+        <div class="title">오셀로</div>
+        <div class="meta"><span>👍 92%</span><span>👤 1.7M</span></div>
+      </div>
+
+    </div>
+
+    <!-- 하단 네비게이션 -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon">
+          🏠
+          <span class="dot"></span>
+        </div>
+        <div class="nav-label">Home</div>
+      </div>
+      <div class="nav-item disabled">
+        <div class="nav-icon">📡</div>
+        <div class="nav-label">Live</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">
+          ➕
+          <span class="dot"></span>
+        </div>
+        <div class="nav-label">Create</div>
+      </div>
+      <div class="nav-item disabled">
+        <div class="nav-icon">📺</div>
+        <div class="nav-label">Feed</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🌍</div>
+        <div class="nav-label">World</div>
+      </div>
+      <div class="nav-item">
+        <div class="profile-avatar">👤</div>
+        <div class="nav-label">Profile</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>메모리 카드</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  width: 100%;
+  max-width: 460px;
+  height: 100vh;
+}
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+  gap: 6px;
+}
+.pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 7px 13px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#home-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#home-btn:hover { background: rgba(0,212,255,0.18); border-color: rgba(0,212,255,0.5); color: #fff; }
+#turn-bar {
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.5px;
+  min-height: 18px;
+}
+#board-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+#card-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.card {
+  aspect-ratio: 1;
+  cursor: pointer;
+  perspective: 600px;
+}
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+  border-radius: 10px;
+}
+.card.flipped .card-inner,
+.card.matched .card-inner {
+  transform: rotateY(180deg);
+}
+.card-back,
+.card-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-back {
+  background-color: #1a1535;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(102,126,234,0.18) 0, rgba(102,126,234,0.18) 1px, transparent 0, transparent 50%),
+    repeating-linear-gradient(-45deg, rgba(102,126,234,0.18) 0, rgba(102,126,234,0.18) 1px, transparent 0, transparent 50%);
+  background-size: 10px 10px;
+  border: 1.5px solid rgba(102,126,234,0.35);
+  font-size: 0;
+}
+.card-front {
+  background: linear-gradient(135deg, #2d1b69, #11998e);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  transform: rotateY(180deg);
+  font-size: clamp(22px, 6vw, 36px);
+}
+.card.matched .card-front {
+  border: 2px solid rgba(0,255,120,0.7);
+  box-shadow: 0 0 14px rgba(0,255,120,0.4), inset 0 0 12px rgba(0,255,120,0.1);
+  background: linear-gradient(135deg, #0d3b2e, #1a5c42);
+}
+.card:not(.matched):not(.flipped):hover .card-back {
+  border-color: rgba(102,126,234,0.55);
+  background: linear-gradient(135deg, #231d4a, #382f7a);
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  border-radius: 0;
+  background: rgba(10,6,35,0.93);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 10;
+}
+.ov-title {
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 4px;
+  text-shadow: 0 0 30px rgba(120,100,255,0.45);
+}
+.ov-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  line-height: 1.75;
+}
+.diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 256px;
+}
+.diff-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.13);
+  border-radius: 14px;
+  color: #fff;
+  padding: 13px 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  width: 100%;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.diff-btn:hover { transform: translateX(5px); }
+.diff-btn.d-easy:hover { background: rgba(56,195,90,0.17); border-color: rgba(56,195,90,0.55); }
+.diff-btn.d-mid:hover  { background: rgba(255,183,0,0.17); border-color: rgba(255,183,0,0.55); }
+.diff-btn.d-hard:hover { background: rgba(255,82,82,0.17); border-color: rgba(255,82,82,0.55); }
+.diff-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.d-easy .diff-dot { background: #38c35a; box-shadow: 0 0 8px rgba(56,195,90,0.7); }
+.d-mid  .diff-dot { background: #ffb700; box-shadow: 0 0 8px rgba(255,183,0,0.7); }
+.d-hard .diff-dot { background: #ff5252; box-shadow: 0 0 8px rgba(255,82,82,0.7); }
+.diff-txt { display: flex; flex-direction: column; gap: 2px; }
+.diff-name { font-size: 15px; font-weight: 700; }
+.diff-desc { font-size: 12px; color: rgba(255,255,255,0.45); }
+.btn {
+  padding: 10px 26px;
+  border-radius: 50px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.btn-g { background: linear-gradient(135deg, #667eea, #764ba2); border: none; }
+.btn-g:hover { opacity: 0.87; transform: scale(1.04); }
+.btn-sm { font-size: 12px; padding: 7px 18px; }
+.ov-badge { font-size: 48px; font-weight: 900; letter-spacing: 2px; }
+.c-win  { color: #00d4ff; text-shadow: 0 0 28px rgba(0,212,255,0.75); }
+.c-lose { color: #ff6b6b; text-shadow: 0 0 22px rgba(255,107,107,0.55); }
+.c-draw { color: #ffd93d; text-shadow: 0 0 22px rgba(255,217,61,0.55); }
+.score-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px 20px;
+}
+.score-label { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; }
+.score-val { font-size: 28px; font-weight: 900; color: #fff; }
+.dbadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.dbadge.easy { background: rgba(56,195,90,0.2); color: #5edf7a; border: 1px solid rgba(56,195,90,0.35); }
+.dbadge.mid  { background: rgba(255,183,0,0.18); color: #ffc933; border: 1px solid rgba(255,183,0,0.35); }
+.dbadge.hard { background: rgba(255,82,82,0.18); color: #ff7070; border: 1px solid rgba(255,82,82,0.35); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <button id="home-btn" onclick="window.location.href='../index.html'">← HOME</button>
+    <div class="pill" id="pill-player">👤 나 : 0</div>
+    <div class="pill" id="pill-ai">🤖 AI : 0</div>
+  </div>
+  <div id="turn-bar"></div>
+  <div id="board-wrap">
+    <div id="card-grid"></div>
+    <div id="overlay"></div>
+  </div>
+</div>
+<script>
+const OV       = document.getElementById('overlay');
+const grid     = document.getElementById('card-grid');
+const turnBar  = document.getElementById('turn-bar');
+const pillP    = document.getElementById('pill-player');
+const pillAI   = document.getElementById('pill-ai');
+const boardWrap= document.getElementById('board-wrap');
+
+const EMOJIS_8  = ['🎮','🎯','🎲','🎪','🎨','🎭','🎸','🎺'];
+const EMOJIS_10 = ['🎮','🎯','🎲','🎪','🎨','🎭','🎸','🎺','🎻','🎹'];
+
+let difficulty = 'easy';
+let cards = [];
+let flipped = [];
+let matched = new Set();
+let playerScore = 0;
+let aiScore = 0;
+let isPlayerTurn = true;
+let busy = false;
+let gameOver = false;
+let timerInterval = null;
+let elapsed = 0;
+let totalPairs = 0;
+let aiMemory = new Map();
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getGridSize() {
+  return window.innerWidth >= 400 ? { cols: 5, rows: 4, pairs: 10 } : { cols: 4, rows: 4, pairs: 8 };
+}
+
+function showDiffScreen() {
+  clearInterval(timerInterval);
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">메모리</div>
+    <div class="ov-sub">난이도를 선택하세요</div>
+    <div class="diff-list">
+      <button class="diff-btn d-easy" onclick="pickDiff('easy')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">초보</div>
+          <div class="diff-desc">AI가 무작위로 뒤집어요</div>
+        </div>
+      </button>
+      <button class="diff-btn d-mid" onclick="pickDiff('medium')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">중수</div>
+          <div class="diff-desc">AI가 본 카드를 40% 활용해요</div>
+        </div>
+      </button>
+      <button class="diff-btn d-hard" onclick="pickDiff('hard')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">고수</div>
+          <div class="diff-desc">AI가 완벽한 기억력을 가져요</div>
+        </div>
+      </button>
+    </div>`;
+}
+
+function pickDiff(d) {
+  difficulty = d;
+  startGame();
+}
+
+function startGame() {
+  const { cols, rows, pairs } = getGridSize();
+  totalPairs = pairs;
+  const emojiSet = pairs === 10 ? EMOJIS_10 : EMOJIS_8;
+  const deck = shuffle([...emojiSet, ...emojiSet]);
+
+  cards = deck.map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
+  flipped = [];
+  matched = new Set();
+  playerScore = 0;
+  aiScore = 0;
+  isPlayerTurn = true;
+  busy = false;
+  gameOver = false;
+  aiMemory = new Map();
+  elapsed = 0;
+
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  renderGrid();
+  updateHUD();
+
+  OV.style.display = 'none';
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => { elapsed++; updateTurnBar(); }, 1000);
+  updateTurnBar();
+}
+
+function renderGrid() {
+  grid.innerHTML = '';
+  cards.forEach((card, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.index = i;
+    el.innerHTML = `<div class="card-inner"><div class="card-back">?</div><div class="card-front">${card.emoji}</div></div>`;
+    el.addEventListener('click', () => onCardClick(i));
+    grid.appendChild(el);
+  });
+}
+
+function getCardEl(i) {
+  return grid.querySelector(`.card[data-index="${i}"]`);
+}
+
+function flipCardEl(i, faceUp) {
+  const el = getCardEl(i);
+  if (!el) return;
+  if (faceUp) el.classList.add('flipped');
+  else el.classList.remove('flipped');
+}
+
+function matchCardEl(i) {
+  const el = getCardEl(i);
+  if (!el) return;
+  el.classList.add('matched');
+  el.classList.remove('flipped');
+}
+
+function updateHUD() {
+  pillP.textContent = `👤 나 : ${playerScore}`;
+  pillAI.textContent = `🤖 AI : ${aiScore}`;
+}
+
+function updateTurnBar() {
+  if (gameOver) { turnBar.textContent = ''; return; }
+  const timeStr = `⏱ ${elapsed}초`;
+  if (isPlayerTurn) {
+    turnBar.textContent = `내 차례  ${timeStr}`;
+  } else {
+    turnBar.textContent = `AI 차례  ${timeStr}`;
+  }
+}
+
+function onCardClick(i) {
+  if (!isPlayerTurn || busy || gameOver) return;
+  if (matched.has(i)) return;
+  if (flipped.includes(i)) return;
+  if (flipped.length >= 2) return;
+
+  cards[i].flipped = true;
+  flipCardEl(i, true);
+  aiMemory.set(i, cards[i].emoji);
+  flipped.push(i);
+
+  if (flipped.length === 2) {
+    busy = true;
+    const [a, b] = flipped;
+    if (cards[a].emoji === cards[b].emoji) {
+      setTimeout(() => {
+        matched.add(a);
+        matched.add(b);
+        matchCardEl(a);
+        matchCardEl(b);
+        flipped = [];
+        playerScore++;
+        updateHUD();
+        busy = false;
+        if (checkGameEnd()) return;
+        updateTurnBar();
+      }, 500);
+    } else {
+      setTimeout(() => {
+        flipCardEl(a, false);
+        flipCardEl(b, false);
+        cards[a].flipped = false;
+        cards[b].flipped = false;
+        flipped = [];
+        isPlayerTurn = false;
+        busy = false;
+        updateTurnBar();
+        setTimeout(doAiTurn, 600);
+      }, 1200);
+    }
+  }
+}
+
+function getUnmatched() {
+  return cards.map((c, i) => i).filter(i => !matched.has(i));
+}
+
+function aiPickFirst() {
+  const unmatched = getUnmatched();
+  if (difficulty === 'easy') {
+    return unmatched[Math.floor(Math.random() * unmatched.length)];
+  }
+  if (difficulty === 'medium') {
+    if (Math.random() < 0.4) {
+      const pair = findKnownPair();
+      if (pair) return pair[0];
+    }
+    return unmatched[Math.floor(Math.random() * unmatched.length)];
+  }
+  const pair = findKnownPair();
+  if (pair) return pair[0];
+  const known = unmatched.filter(i => aiMemory.has(i));
+  if (known.length > 0) return known[Math.floor(Math.random() * known.length)];
+  return unmatched[Math.floor(Math.random() * unmatched.length)];
+}
+
+function aiPickSecond(firstIdx) {
+  const firstEmoji = cards[firstIdx].emoji;
+  const unmatched = getUnmatched().filter(i => i !== firstIdx);
+
+  if (difficulty === 'easy') {
+    return unmatched[Math.floor(Math.random() * unmatched.length)];
+  }
+  if (difficulty === 'medium') {
+    if (Math.random() < 0.4) {
+      const match = unmatched.find(i => aiMemory.has(i) && aiMemory.get(i) === firstEmoji);
+      if (match !== undefined) return match;
+    }
+    return unmatched[Math.floor(Math.random() * unmatched.length)];
+  }
+  const match = unmatched.find(i => aiMemory.has(i) && aiMemory.get(i) === firstEmoji);
+  if (match !== undefined) return match;
+  const unknown = unmatched.filter(i => !aiMemory.has(i));
+  if (unknown.length > 0) return unknown[Math.floor(Math.random() * unknown.length)];
+  return unmatched[Math.floor(Math.random() * unmatched.length)];
+}
+
+function findKnownPair() {
+  const entries = [...aiMemory.entries()].filter(([i]) => !matched.has(i));
+  for (let x = 0; x < entries.length; x++) {
+    for (let y = x + 1; y < entries.length; y++) {
+      if (entries[x][1] === entries[y][1]) return [entries[x][0], entries[y][0]];
+    }
+  }
+  return null;
+}
+
+function doAiTurn() {
+  if (gameOver) return;
+  busy = true;
+  const firstIdx = aiPickFirst();
+  if (firstIdx === undefined) { busy = false; isPlayerTurn = true; updateTurnBar(); return; }
+
+  flipCardEl(firstIdx, true);
+  aiMemory.set(firstIdx, cards[firstIdx].emoji);
+
+  setTimeout(() => {
+    const secondIdx = aiPickSecond(firstIdx);
+    if (secondIdx === undefined) {
+      flipCardEl(firstIdx, false);
+      flipped = [];
+      busy = false;
+      isPlayerTurn = true;
+      updateTurnBar();
+      return;
+    }
+
+    flipCardEl(secondIdx, true);
+    aiMemory.set(secondIdx, cards[secondIdx].emoji);
+
+    setTimeout(() => {
+      if (cards[firstIdx].emoji === cards[secondIdx].emoji) {
+        matched.add(firstIdx);
+        matched.add(secondIdx);
+        matchCardEl(firstIdx);
+        matchCardEl(secondIdx);
+        aiScore++;
+        updateHUD();
+        busy = false;
+        if (checkGameEnd()) return;
+        updateTurnBar();
+        setTimeout(doAiTurn, 700);
+      } else {
+        setTimeout(() => {
+          flipCardEl(firstIdx, false);
+          flipCardEl(secondIdx, false);
+          flipped = [];
+          isPlayerTurn = true;
+          busy = false;
+          updateTurnBar();
+        }, 1000);
+      }
+    }, 700);
+  }, 600);
+}
+
+function checkGameEnd() {
+  if (matched.size === totalPairs * 2) {
+    gameOver = true;
+    clearInterval(timerInterval);
+    updateTurnBar();
+    setTimeout(showResult, 600);
+    return true;
+  }
+  return false;
+}
+
+function showResult() {
+  let badge, cls, sub;
+  if (playerScore > aiScore) {
+    badge = '승리!'; cls = 'c-win'; sub = `${playerScore}쌍 vs ${aiScore}쌍으로 승리!`;
+  } else if (aiScore > playerScore) {
+    badge = '패배'; cls = 'c-lose'; sub = `${playerScore}쌍 vs ${aiScore}쌍으로 패배`;
+  } else {
+    badge = '무승부'; cls = 'c-draw'; sub = `${playerScore}쌍 vs ${aiScore}쌍 동점!`;
+  }
+
+  const diffMap = { easy: ['초보', 'easy'], medium: ['중수', 'mid'], hard: ['고수', 'hard'] };
+  const [dlabel, dcls] = diffMap[difficulty];
+
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">게임 종료</div>
+    <div class="ov-badge ${cls}">${badge}</div>
+    <div class="score-row">
+      <div class="score-box">
+        <div class="score-label">👤 나</div>
+        <div class="score-val">${playerScore}</div>
+      </div>
+      <div class="score-box">
+        <div class="score-label">🤖 AI</div>
+        <div class="score-val">${aiScore}</div>
+      </div>
+    </div>
+    <div class="ov-sub">${sub}<br><span class="dbadge ${dcls}" style="display:inline-block;margin-top:6px">${dlabel}</span> · ${elapsed}초</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-g" onclick="startGame()">같은 난이도로</button>
+      <button class="btn btn-sm" onclick="showDiffScreen()">난이도 변경</button>
+    </div>`;
+}
+
+window.addEventListener('resize', () => {
+  if (!gameOver) {
+    const { cols } = getGridSize();
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  }
+});
+
+showDiffScreen();
+</script>
+</body>
+</html>

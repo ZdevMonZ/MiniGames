@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>오목</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  width: 100%;
+  max-width: 450px;
+}
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+}
+.pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 7px 15px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 110px;
+}
+#turn-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+#board-wrap { position: relative; }
+canvas {
+  display: block;
+  border-radius: 10px;
+  cursor: crosshair;
+}
+
+/* ── Overlay base ── */
+#overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: rgba(10,6,35,0.93);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 10;
+}
+.ov-title {
+  font-size: 32px; font-weight: 900; color: #fff;
+  letter-spacing: 5px;
+  text-shadow: 0 0 30px rgba(120,100,255,0.45);
+}
+.ov-sub {
+  font-size: 14px; color: rgba(255,255,255,0.5);
+  text-align: center; line-height: 1.75;
+}
+
+/* ── Difficulty list ── */
+.diff-list {
+  display: flex; flex-direction: column; gap: 10px; width: 256px;
+}
+.diff-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.13);
+  border-radius: 14px; color: #fff;
+  padding: 13px 17px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; width: 100%;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.diff-btn:hover                { transform: translateX(5px); }
+.diff-btn.d-easy:hover { background: rgba(56,195,90,0.17);  border-color: rgba(56,195,90,0.55); }
+.diff-btn.d-mid:hover  { background: rgba(255,183,0,0.17);  border-color: rgba(255,183,0,0.55); }
+.diff-btn.d-hard:hover { background: rgba(255,82,82,0.17);  border-color: rgba(255,82,82,0.55); }
+.diff-dot {
+  width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+}
+.d-easy .diff-dot { background: #38c35a; box-shadow: 0 0 8px rgba(56,195,90,0.7); }
+.d-mid  .diff-dot { background: #ffb700; box-shadow: 0 0 8px rgba(255,183,0,0.7); }
+.d-hard .diff-dot { background: #ff5252; box-shadow: 0 0 8px rgba(255,82,82,0.7); }
+.diff-txt { display: flex; flex-direction: column; gap: 2px; }
+.diff-name { font-size: 15px; font-weight: 700; }
+.diff-desc { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+/* ── Color pick ── */
+.color-row { display: flex; gap: 36px; }
+.cpick {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 9px; cursor: pointer;
+}
+.sbtn {
+  width: 68px; height: 68px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  transition: transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+  pointer-events: none;
+}
+.cpick:hover .sbtn { transform: scale(1.12); border-color: #00d4ff; box-shadow: 0 0 22px rgba(0,212,255,0.5); }
+.sbtn.is-black { background: radial-gradient(circle at 34% 32%, #5c5c5c, #0a0a0a 74%); box-shadow: 2px 3px 9px rgba(0,0,0,0.65); }
+.sbtn.is-white { background: radial-gradient(circle at 34% 32%, #ffffff, #c2c2c2 74%); box-shadow: 2px 3px 9px rgba(0,0,0,0.4); }
+.clabel { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; }
+
+/* ── Home button ── */
+#home-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.75);
+  font-size: 12px; font-weight: 700;
+  padding: 7px 14px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+#home-btn:hover { background: rgba(0,212,255,0.18); border-color: rgba(0,212,255,0.5); color: #fff; }
+
+/* ── HUD difficulty badge ── */
+.dbadge {
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
+}
+.dbadge.easy { background: rgba(56,195,90,0.2);  color: #5edf7a; border: 1px solid rgba(56,195,90,0.35); }
+.dbadge.mid  { background: rgba(255,183,0,0.18); color: #ffc933; border: 1px solid rgba(255,183,0,0.35); }
+.dbadge.hard { background: rgba(255,82,82,0.18); color: #ff7070; border: 1px solid rgba(255,82,82,0.35); }
+
+/* ── Generic buttons ── */
+.btn {
+  padding: 10px 26px; border-radius: 50px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all 0.18s;
+}
+.btn:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.btn-g { background: linear-gradient(135deg, #667eea, #764ba2); border: none; }
+.btn-g:hover { opacity: 0.87; transform: scale(1.04); }
+.btn-sm { font-size: 12px; padding: 7px 18px; }
+
+/* ── Result ── */
+.ov-badge { font-size: 48px; font-weight: 900; letter-spacing: 2px; }
+.c-win  { color: #00d4ff; text-shadow: 0 0 28px rgba(0,212,255,0.75); }
+.c-lose { color: #ff6b6b; text-shadow: 0 0 22px rgba(255,107,107,0.55); }
+.c-draw { color: #ffd93d; text-shadow: 0 0 22px rgba(255,217,61,0.55); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <button id="home-btn" onclick="window.location.href='../index.html'">← HOME</button>
+    <div class="pill">
+      <div id="turn-dot"></div>
+      <span id="turn-text">-</span>
+    </div>
+    <div class="pill" style="justify-content:center">
+      <span id="diff-badge" class="dbadge" style="display:none"></span>
+      <span id="status-el">준비 중</span>
+    </div>
+  </div>
+  <div id="board-wrap">
+    <canvas id="c"></canvas>
+    <div id="overlay"></div>
+  </div>
+</div>
+<script>
+// ── Constants ────────────────────────────────────────────────
+const N = 15;
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+
+// ── DOM ──────────────────────────────────────────────────────
+const canvas    = document.getElementById('c');
+const ctx       = canvas.getContext('2d');
+const OV        = document.getElementById('overlay');
+const turnDot   = document.getElementById('turn-dot');
+const turnTxt   = document.getElementById('turn-text');
+const statusEl  = document.getElementById('status-el');
+const diffBadge = document.getElementById('diff-badge');
+
+// ── Layout (set in resize()) ─────────────────────────────────
+let CELL, MARGIN, SR;
+
+// ── Game state ───────────────────────────────────────────────
+let board, pColor, aiColor, turn;
+let over = true, winCells = null, lastMove = null, hover = null;
+let difficulty = 'medium';
+
+// ── Sizing ───────────────────────────────────────────────────
+function resize() {
+  const W  = Math.min(window.innerWidth - 16, 440);
+  CELL     = Math.floor(W / N);
+  MARGIN   = CELL;
+  SR       = Math.floor(CELL * 0.44);
+  const px = MARGIN * 2 + (N - 1) * CELL;
+  canvas.width = canvas.height = px;
+  canvas.style.width  = px + 'px';
+  canvas.style.height = px + 'px';
+  if (!over) draw();
+}
+
+// ── Overlay screens ──────────────────────────────────────────
+function showDiffScreen() {
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">오 목</div>
+    <div class="ov-sub">난이도를 선택하세요</div>
+    <div class="diff-list">
+      <button class="diff-btn d-easy" onclick="pickDiff('easy')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">초보</div>
+          <div class="diff-desc">쉽게 이길 수 있어요</div>
+        </div>
+      </button>
+      <button class="diff-btn d-mid" onclick="pickDiff('medium')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">중수</div>
+          <div class="diff-desc">적당한 실력의 AI</div>
+        </div>
+      </button>
+      <button class="diff-btn d-hard" onclick="pickDiff('hard')">
+        <div class="diff-dot"></div>
+        <div class="diff-txt">
+          <div class="diff-name">고수</div>
+          <div class="diff-desc">이기기 매우 어려워요</div>
+        </div>
+      </button>
+    </div>`;
+}
+
+function pickDiff(d) {
+  difficulty = d;
+  showColorScreen();
+}
+
+function showColorScreen() {
+  OV.innerHTML = `
+    <div class="ov-title">오 목</div>
+    <div class="ov-sub">돌 색을 선택하세요<br>5개를 먼저 이으면 승리!</div>
+    <div class="color-row">
+      <div class="cpick" onclick="startGame(1)">
+        <div class="sbtn is-black"></div>
+        <div class="clabel">흑 · 선공</div>
+      </div>
+      <div class="cpick" onclick="startGame(2)">
+        <div class="sbtn is-white"></div>
+        <div class="clabel">백 · 후공</div>
+      </div>
+    </div>
+    <button class="btn btn-sm" onclick="showDiffScreen()">← 난이도 변경</button>`;
+}
+
+// ── Game start ───────────────────────────────────────────────
+function startGame(pc) {
+  pColor   = pc;
+  aiColor  = pc === BLACK ? WHITE : BLACK;
+  board    = Array.from({length: N}, () => new Array(N).fill(EMPTY));
+  turn     = BLACK;
+  over     = false;
+  winCells = null;
+  lastMove = null;
+  hover    = null;
+  OV.style.display = 'none';
+  updateHUD();
+  draw();
+  if (aiColor === BLACK) schedAI();
+}
+
+function updateHUD() {
+  const mine = (turn === pColor);
+  const name = turn === BLACK ? '흑' : '백';
+  turnDot.style.background = turn === BLACK
+    ? 'radial-gradient(circle at 34% 32%, #5c5c5c, #0a0a0a 74%)'
+    : 'radial-gradient(circle at 34% 32%, #ffffff, #c2c2c2 74%)';
+  turnDot.style.boxShadow = turn === BLACK
+    ? 'inset 0 -2px 4px rgba(0,0,0,0.7)'
+    : 'inset 0 -2px 4px rgba(0,0,0,0.15), 0 0 5px rgba(255,255,255,0.35)';
+  turnTxt.textContent = mine ? `${name} (나)` : `${name} (AI)`;
+
+  const diffMap = { easy: ['초보', 'easy'], medium: ['중수', 'mid'], hard: ['고수', 'hard'] };
+  const [label, cls] = diffMap[difficulty];
+  diffBadge.style.display = '';
+  diffBadge.textContent   = label;
+  diffBadge.className     = `dbadge ${cls}`;
+  statusEl.textContent    = over ? '종료' : mine ? '내 차례' : 'AI 생각 중...';
+}
+
+// ── Drawing ──────────────────────────────────────────────────
+function draw() {
+  const px = canvas.width;
+  ctx.clearRect(0, 0, px, px);
+
+  const bg = ctx.createLinearGradient(0, 0, px, px);
+  bg.addColorStop(0, '#cc9545');
+  bg.addColorStop(1, '#a56c28');
+  ctx.fillStyle = bg;
+  rrect(0, 0, px, px, 10);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < px; i += 7) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(px, i + 5); ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.52)';
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < N; i++) {
+    const xy = MARGIN + i * CELL;
+    ln(xy, MARGIN, xy, MARGIN + (N - 1) * CELL);
+    ln(MARGIN, xy, MARGIN + (N - 1) * CELL, xy);
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  for (const r of [3, 7, 11])
+    for (const c of [3, 7, 11])
+      circ(MARGIN + c * CELL, MARGIN + r * CELL, CELL * 0.1);
+
+  if (winCells) {
+    const [r0, c0] = winCells[0];
+    const [rE, cE] = winCells[winCells.length - 1];
+    ctx.strokeStyle = 'rgba(255,70,70,0.88)';
+    ctx.lineWidth   = CELL * 0.17;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(MARGIN + c0 * CELL, MARGIN + r0 * CELL);
+    ctx.lineTo(MARGIN + cE * CELL, MARGIN + rE * CELL);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (board[r][c]) drawStone(r, c, board[r][c], false);
+
+  if (lastMove) {
+    const [lr, lc] = lastMove;
+    const x = MARGIN + lc * CELL, y = MARGIN + lr * CELL;
+    ctx.fillStyle = board[lr][lc] === BLACK ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.45)';
+    circ(x, y, SR * 0.27);
+  }
+
+  if (hover && !over && turn === pColor) {
+    const [hr, hc] = hover;
+    if (board[hr][hc] === EMPTY) drawStone(hr, hc, pColor, true);
+  }
+}
+
+function drawStone(r, c, color, ghost) {
+  const x = MARGIN + c * CELL, y = MARGIN + r * CELL;
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.22 : 0.38;
+  ctx.fillStyle   = 'rgba(0,0,0,0.7)';
+  circ(x + 2, y + 3, SR);
+
+  const g = ctx.createRadialGradient(x - SR * 0.3, y - SR * 0.35, SR * 0.05, x, y, SR);
+  if (color === BLACK) {
+    g.addColorStop(0, '#636363'); g.addColorStop(0.5, '#181818'); g.addColorStop(1, '#000000');
+  } else {
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#f0f0f0'); g.addColorStop(1, '#aaaaaa');
+  }
+  ctx.globalAlpha = ghost ? 0.42 : 1;
+  ctx.fillStyle   = g;
+  circ(x, y, SR);
+
+  const hl = ctx.createRadialGradient(x - SR * 0.27, y - SR * 0.32, 0, x - SR * 0.27, y - SR * 0.32, SR * 0.52);
+  hl.addColorStop(0, color === BLACK ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.72)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hl;
+  circ(x, y, SR);
+  ctx.restore();
+
+  if (winCells && winCells.some(([wr, wc]) => wr === r && wc === c)) {
+    ctx.strokeStyle = 'rgba(255,110,0,0.92)';
+    ctx.lineWidth   = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, SR + 1.5, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+function rrect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+function ln(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+function circ(x, y, r)       { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+
+// ── Input ────────────────────────────────────────────────────
+function cellAt(px, py) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (px - rect.left) * (canvas.width  / rect.width);
+  const y = (py - rect.top)  * (canvas.height / rect.height);
+  const c = Math.round((x - MARGIN) / CELL);
+  const r = Math.round((y - MARGIN) / CELL);
+  return (r >= 0 && r < N && c >= 0 && c < N) ? [r, c] : null;
+}
+
+canvas.addEventListener('click', e => {
+  if (over || turn !== pColor) return;
+  const cell = cellAt(e.clientX, e.clientY);
+  if (!cell || board[cell[0]][cell[1]] !== EMPTY) return;
+  place(cell[0], cell[1], pColor);
+  if (!over) schedAI();
+});
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (over || turn !== pColor) return;
+  const t = e.changedTouches[0];
+  const cell = cellAt(t.clientX, t.clientY);
+  if (!cell || board[cell[0]][cell[1]] !== EMPTY) return;
+  place(cell[0], cell[1], pColor);
+  if (!over) schedAI();
+});
+canvas.addEventListener('mousemove', e => {
+  if (over || turn !== pColor) return;
+  const cell = cellAt(e.clientX, e.clientY);
+  if (!cell) { if (hover) { hover = null; draw(); } return; }
+  if (!hover || hover[0] !== cell[0] || hover[1] !== cell[1]) { hover = cell; draw(); }
+});
+canvas.addEventListener('mouseleave', () => { if (hover) { hover = null; draw(); } });
+
+// ── Game logic ───────────────────────────────────────────────
+function place(r, c, color) {
+  board[r][c] = color;
+  lastMove    = [r, c];
+  const win   = checkWin(r, c, color);
+  if (win) {
+    winCells = win; over = true; draw();
+    setTimeout(() => showResult(color === pColor ? 'win' : 'lose'), 750);
+  } else if (full()) {
+    over = true; draw();
+    setTimeout(() => showResult('draw'), 750);
+  } else {
+    turn = color === BLACK ? WHITE : BLACK;
+    updateHUD(); draw();
+  }
+}
+
+function checkWin(r, c, color) {
+  const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  for (const [dr, dc] of dirs) {
+    const seq = [[r, c]];
+    for (let s = 1; s < 5; s++) { const nr = r+dr*s, nc = c+dc*s; if (nr<0||nr>=N||nc<0||nc>=N||board[nr][nc]!==color) break; seq.push([nr,nc]); }
+    for (let s = 1; s < 5; s++) { const nr = r-dr*s, nc = c-dc*s; if (nr<0||nr>=N||nc<0||nc>=N||board[nr][nc]!==color) break; seq.push([nr,nc]); }
+    if (seq.length >= 5) { seq.sort((a, b) => a[0] !== b[0] ? a[0]-b[0] : a[1]-b[1]); return seq; }
+  }
+  return null;
+}
+
+function full() { return board.every(row => row.every(v => v !== EMPTY)); }
+
+// ── AI ───────────────────────────────────────────────────────
+function schedAI() {
+  updateHUD();
+  const delay = { easy: 300, medium: 400, hard: 550 }[difficulty];
+  setTimeout(() => { if (!over) { const m = bestMove(); if (m) place(m[0], m[1], aiColor); } }, delay);
+}
+
+function bestMove() {
+  if (difficulty === 'easy') return bestMoveEasy();
+  if (difficulty === 'hard') return bestMoveHard();
+  return bestMoveMedium();
+}
+
+// 초보: 즉시 승리만 체크, 나머지는 65% 확률로 랜덤
+function bestMoveEasy() {
+  const cands = candidates(1);
+  if (!cands.length) return [7, 7];
+  for (const [r, c] of cands) {
+    board[r][c] = aiColor; const w = checkWin(r, c, aiColor); board[r][c] = EMPTY;
+    if (w) return [r, c];
+  }
+  if (Math.random() < 0.65) return cands[Math.floor(Math.random() * cands.length)];
+  let best = -Infinity, bm = cands[0];
+  for (const [r, c] of cands) {
+    board[r][c] = aiColor; const s = scorePos(r, c, aiColor); board[r][c] = EMPTY;
+    if (s > best) { best = s; bm = [r, c]; }
+  }
+  return bm;
+}
+
+// 중수: 즉시 승리 → 즉시 차단 → 공격/수비 균형 휴리스틱
+function bestMoveMedium() {
+  const cands = candidates(2);
+  if (!cands.length) return null;
+  for (const [r, c] of cands) { board[r][c]=aiColor; const w=checkWin(r,c,aiColor); board[r][c]=EMPTY; if(w) return [r,c]; }
+  for (const [r, c] of cands) { board[r][c]=pColor;  const w=checkWin(r,c,pColor);  board[r][c]=EMPTY; if(w) return [r,c]; }
+  let best = -Infinity, bm = cands[0];
+  for (const [r, c] of cands) {
+    board[r][c] = aiColor; const as = scorePos(r, c, aiColor); board[r][c] = EMPTY;
+    board[r][c] = pColor;  const ps = scorePos(r, c, pColor);  board[r][c] = EMPTY;
+    const s = as * 1.05 + ps;
+    if (s > best) { best = s; bm = [r, c]; }
+  }
+  return bm;
+}
+
+// 고수: 즉시 승리 → 즉시 차단 → 2수 앞 예측 (상대 최선 응수 고려)
+function bestMoveHard() {
+  const cands = candidates(2);
+  if (!cands.length) return null;
+  for (const [r, c] of cands) { board[r][c]=aiColor; const w=checkWin(r,c,aiColor); board[r][c]=EMPTY; if(w) return [r,c]; }
+  for (const [r, c] of cands) { board[r][c]=pColor;  const w=checkWin(r,c,pColor);  board[r][c]=EMPTY; if(w) return [r,c]; }
+
+  let best = -Infinity, bm = cands[0];
+  for (const [r, c] of cands) {
+    board[r][c] = aiColor;
+    const myOff = scorePos(r, c, aiColor);
+
+    // 상대방의 최선 응수 탐색
+    let oppBest = 0;
+    for (const [or, oc] of candidates(2)) {
+      board[or][oc] = pColor;
+      const ow = checkWin(or, oc, pColor);
+      if (ow) { board[or][oc] = EMPTY; oppBest = 1e6; break; }
+      const os = scorePos(or, oc, pColor);
+      board[or][oc] = EMPTY;
+      if (os > oppBest) oppBest = os;
+    }
+    board[r][c] = EMPTY;
+
+    // 이 위치의 수비 가치 (내가 여기 두지 않으면 상대가 얼마나 이득인지)
+    board[r][c] = pColor; const myDef = scorePos(r, c, pColor); board[r][c] = EMPTY;
+
+    const s = myOff * 1.1 + myDef - oppBest * 0.8;
+    if (s > best) { best = s; bm = [r, c]; }
+  }
+  return bm;
+}
+
+function candidates(range = 2) {
+  const seen = new Set(), res = [];
+  let any = false;
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (board[r][c]) {
+    any = true;
+    for (let dr = -range; dr <= range; dr++) for (let dc = -range; dc <= range; dc++) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < N && nc >= 0 && nc < N && !board[nr][nc]) {
+        const k = nr * N + nc;
+        if (!seen.has(k)) { seen.add(k); res.push([nr, nc]); }
+      }
+    }
+  }
+  return any ? res : [[7, 7]];
+}
+
+function scorePos(r, c, col) {
+  const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  let total = 0;
+  for (const [dr, dc] of dirs) {
+    let cnt = 1, open = 0;
+    let nr = r + dr, nc = c + dc;
+    while (nr >= 0 && nr < N && nc >= 0 && nc < N && board[nr][nc] === col) { cnt++; nr += dr; nc += dc; }
+    if (nr >= 0 && nr < N && nc >= 0 && nc < N && !board[nr][nc]) open++;
+    nr = r - dr; nc = c - dc;
+    while (nr >= 0 && nr < N && nc >= 0 && nc < N && board[nr][nc] === col) { cnt++; nr -= dr; nc -= dc; }
+    if (nr >= 0 && nr < N && nc >= 0 && nc < N && !board[nr][nc]) open++;
+    total += lineScore(cnt, open);
+  }
+  return total;
+}
+
+function lineScore(cnt, open) {
+  if (cnt >= 5) return 1e5;
+  if (!open)    return 0;
+  const T = { 4: { 2: 5e4, 1: 1e4 }, 3: { 2: 5e3, 1: 1e3 }, 2: { 2: 500, 1: 100 }, 1: { 2: 50, 1: 10 } };
+  return T[cnt]?.[open] ?? 0;
+}
+
+// ── Result ───────────────────────────────────────────────────
+function showResult(r) {
+  const [badge, cls, sub] =
+    r === 'win'  ? ['승리!',  'c-win',  '5목 완성!'] :
+    r === 'lose' ? ['패배',   'c-lose', 'AI가 5목을 완성했습니다'] :
+                   ['무승부', 'c-draw', '보드가 꽉 찼습니다'];
+  OV.style.display = 'flex';
+  OV.innerHTML = `
+    <div class="ov-title">게임 종료</div>
+    <div class="ov-badge ${cls}">${badge}</div>
+    <div class="ov-sub">${sub}</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-g" onclick="showColorScreen()">같은 난이도로</button>
+      <button class="btn btn-sm" onclick="showDiffScreen()">난이도 변경</button>
+    </div>`;
+}
+
+// ── Init ─────────────────────────────────────────────────────
+resize();
+window.addEventListener('resize', resize);
+showDiffScreen();
+</script>
+</body>
+</html>
