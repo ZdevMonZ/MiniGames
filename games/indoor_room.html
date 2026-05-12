@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indoor Room — Three.js</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#0a0608; overflow:hidden; font-family:sans-serif; }
+    canvas { display:block; }
+    #hint {
+      position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+      color:rgba(255,240,200,0.7); font-size:12px;
+      background:rgba(0,0,0,0.45); padding:6px 16px; border-radius:12px;
+      pointer-events:none; white-space:nowrap; backdrop-filter:blur(4px);
+    }
+  </style>
+</head>
+<body>
+<div id="hint">마우스로 카메라를 움직이면 캐릭터가 시선을 맞춥니다</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
+
+// ── Renderer ──────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+// ── Scene ─────────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0a08);
+scene.fog = new THREE.Fog(0x0d0a08, 14, 28);
+
+// ── Camera & Controls ─────────────────────────────────────────────────────────
+const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 0.05, 60);
+camera.position.set(0, 1.85, 5.0);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.25, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.minDistance = 1.5;
+controls.maxDistance = 9;
+controls.maxPolarAngle = Math.PI * 0.62;
+controls.minPolarAngle = 0.1;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function box(w, h, d, mat, x, y, z, ry = 0) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  m.rotation.y = ry;
+  m.castShadow = true; m.receiveShadow = true;
+  scene.add(m); return m;
+}
+function cyl(rT, rB, h, seg, mat, x, y, z, rx = 0, ry = 0) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rT, rB, h, seg), mat);
+  m.position.set(x, y, z);
+  m.rotation.x = rx; m.rotation.y = ry;
+  m.castShadow = true; m.receiveShadow = true;
+  scene.add(m); return m;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  LIGHTING
+// ═════════════════════════════════════════════════════════════════════════════
+// Very low ambient
+scene.add(new THREE.AmbientLight(0xfff0d8, 0.18));
+
+// Ceiling overhead (warm dim)
+const ceilLight = new THREE.PointLight(0xffcc88, 1.2, 12, 2);
+ceilLight.position.set(0, 3.1, -0.5);
+ceilLight.castShadow = false;
+scene.add(ceilLight);
+
+// Desk lamp (warm amber, main key light)
+const lampLight = new THREE.PointLight(0xff9944, 3.5, 5, 1.8);
+lampLight.position.set(-0.85, 1.52, -1.20);
+lampLight.castShadow = true;
+lampLight.shadow.mapSize.set(512, 512);
+lampLight.shadow.bias = -0.005;
+scene.add(lampLight);
+
+// Monitor glow (cool blue — fills shadows on face)
+const monitorLight = new THREE.PointLight(0x88bbff, 1.8, 3.2, 2);
+monitorLight.position.set(0, 1.35, 1.55);
+scene.add(monitorLight);
+
+// Window fill (pale blue from right)
+const windowLight = new THREE.DirectionalLight(0xaaccff, 0.4);
+windowLight.position.set(5, 3, -1);
+scene.add(windowLight);
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  MATERIALS
+// ═════════════════════════════════════════════════════════════════════════════
+const mFloor   = new THREE.MeshStandardMaterial({ color: 0xb87840, roughness: 0.55, metalness: 0.0 });
+const mWall    = new THREE.MeshStandardMaterial({ color: 0xf0e6d4, roughness: 0.92 });
+const mCeil    = new THREE.MeshStandardMaterial({ color: 0xfff8f0, roughness: 0.95 });
+const mDark    = new THREE.MeshStandardMaterial({ color: 0x1a1210, roughness: 0.9 });
+const mDesk    = new THREE.MeshStandardMaterial({ color: 0x5c3318, roughness: 0.45, metalness: 0.05 });
+const mDeskTop = new THREE.MeshStandardMaterial({ color: 0x7a4828, roughness: 0.30, metalness: 0.08 });
+const mChair   = new THREE.MeshStandardMaterial({ color: 0x2a2d38, roughness: 0.82 });
+const mChairL  = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.5,  metalness: 0.4 });
+const mShelf   = new THREE.MeshStandardMaterial({ color: 0x8b5228, roughness: 0.55 });
+const mBook1   = new THREE.MeshStandardMaterial({ color: 0x882222 });
+const mBook2   = new THREE.MeshStandardMaterial({ color: 0x225588 });
+const mBook3   = new THREE.MeshStandardMaterial({ color: 0x228844 });
+const mBook4   = new THREE.MeshStandardMaterial({ color: 0xaa7722 });
+const mLamp    = new THREE.MeshStandardMaterial({ color: 0xd4a040, roughness: 0.3, metalness: 0.6 });
+const mLampShd = new THREE.MeshStandardMaterial({ color: 0xffe8c0, roughness: 0.6, emissive: 0xffcc66, emissiveIntensity: 0.4, side: THREE.DoubleSide });
+const mCurtain = new THREE.MeshStandardMaterial({ color: 0x8b7060, roughness: 0.95, side: THREE.DoubleSide });
+const mWindow  = new THREE.MeshStandardMaterial({ color: 0x6090cc, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35 });
+const mPlant   = new THREE.MeshStandardMaterial({ color: 0x336622, roughness: 0.9 });
+const mPot     = new THREE.MeshStandardMaterial({ color: 0xcc7744, roughness: 0.7 });
+const mMug     = new THREE.MeshStandardMaterial({ color: 0xf8f0e8, roughness: 0.4 });
+const mMetalGray = new THREE.MeshStandardMaterial({ color: 0x888890, roughness: 0.35, metalness: 0.7 });
+const mScreen  = new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.0, emissive: 0x2244aa, emissiveIntensity: 1.5 });
+const mScreenBz= new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.3, metalness: 0.5 });
+const mKeyboard= new THREE.MeshStandardMaterial({ color: 0x1c1e28, roughness: 0.5 });
+const mWoodLt  = new THREE.MeshStandardMaterial({ color: 0x9a6840, roughness: 0.6 });
+const mRug     = new THREE.MeshStandardMaterial({ color: 0x5c3c48, roughness: 1.0 });
+const mPicFrame= new THREE.MeshStandardMaterial({ color: 0x3a2812, roughness: 0.5 });
+const mPicBg   = new THREE.MeshStandardMaterial({ color: 0xd4b880, roughness: 0.6, emissive: 0x604820, emissiveIntensity: 0.2 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  ROOM SHELL
+// ═════════════════════════════════════════════════════════════════════════════
+const RW = 9, RH = 3.2, RD = 8;
+// Floor
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(RW, RD), mFloor);
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+scene.add(floor);
+// Planks direction hint — thin lines (omit for perf, color only)
+
+// Rug
+const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.8), mRug);
+rug.rotation.x = -Math.PI/2; rug.position.set(0, 0.002, 1.2);
+rug.receiveShadow = true; scene.add(rug);
+
+// Walls (back, left, right) — thick slabs for shadow catch
+box(RW, RH, 0.14, mWall,  0,         RH/2, -RD/2 + 0.07);  // back
+box(0.14, RH, RD, mWall, -RW/2+0.07, RH/2, 0);              // left
+box(0.14, RH, RD, mWall,  RW/2-0.07, RH/2, 0);              // right
+// Ceiling
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(RW, RD), mCeil);
+ceil.rotation.x = Math.PI/2; ceil.position.set(0, RH, 0);
+ceil.receiveShadow = true; scene.add(ceil);
+
+// Baseboard trim
+box(RW, 0.09, 0.06, mDark,  0,           0.045, -RD/2+0.10);
+box(0.06, 0.09, RD, mDark, -RW/2+0.10,   0.045, 0);
+box(0.06, 0.09, RD, mDark,  RW/2-0.10,   0.045, 0);
+
+// ── Window (right wall) ───────────────────────────────────────────────────────
+const WX = RW/2 - 0.07;
+// Window frame
+box(0.08, 1.55, 1.45, mWoodLt, WX, 2.05, -1.0);      // outer frame
+box(0.06, 1.35, 1.25, mDark,   WX, 2.05, -1.0);      // inner recess
+// Glass pane
+const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.3), mWindow);
+glass.rotation.y = -Math.PI/2; glass.position.set(WX - 0.04, 2.05, -1.0);
+scene.add(glass);
+// Bright outside sky (emissive plane behind glass)
+const skyPane = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.35),
+  new THREE.MeshStandardMaterial({ color:0x88aad4, emissive:0x7090c8, emissiveIntensity:0.9, side:THREE.DoubleSide }));
+skyPane.rotation.y = -Math.PI/2; skyPane.position.set(WX + 0.02, 2.05, -1.0);
+scene.add(skyPane);
+// Curtains
+box(0.02, 1.7, 0.48, mCurtain, WX - 0.02, 2.0, -0.22);
+box(0.02, 1.7, 0.48, mCurtain, WX - 0.02, 2.0, -1.78);
+// Cross bar
+box(0.04, 0.04, 1.6, mWoodLt, WX - 0.03, 2.78, -1.0);
+
+// ── Wall decorations ──────────────────────────────────────────────────────────
+// Framed picture on back wall
+box(0.06, 1.05, 0.80, mPicFrame, -1.8, 1.85, -RD/2+0.12);
+const pic = new THREE.Mesh(new THREE.PlaneGeometry(0.68, 0.90), mPicBg);
+pic.rotation.y = Math.PI; pic.position.set(-1.8, 1.85, -RD/2+0.16);
+scene.add(pic);
+// Simple clock on back wall
+const clockBase = new THREE.Mesh(new THREE.CircleGeometry(0.22, 32), mDark);
+clockBase.rotation.y = Math.PI; clockBase.position.set(1.6, 2.4, -RD/2+0.08);
+scene.add(clockBase);
+const clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.20, 32),
+  new THREE.MeshStandardMaterial({ color: 0xfff5e8 }));
+clockFace.rotation.y = Math.PI; clockFace.position.set(1.6, 2.4, -RD/2+0.10);
+scene.add(clockFace);
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  DESK (L-shaped approximation: main slab + side return)
+// ═════════════════════════════════════════════════════════════════════════════
+const DESK_Y = 0.76;  // desk surface world y
+// Main desk top surface
+box(2.4,  0.06, 1.10, mDeskTop, 0,     DESK_Y,        -1.55);
+box(2.4,  0.68, 0.06, mDesk,    0,     DESK_Y - 0.37, -0.97);  // front panel
+box(0.06, 0.68, 1.04, mDesk,    -1.17, DESK_Y - 0.37, -1.55);  // left side
+box(0.06, 0.68, 1.04, mDesk,     1.17, DESK_Y - 0.37, -1.55);  // right side
+// Desk legs
+[[-1.1, -1.98], [1.1, -1.98], [-1.1, -1.12], [1.1, -1.12]].forEach(([lx, lz]) =>
+  cyl(0.04, 0.04, DESK_Y, 6, mDesk, lx, DESK_Y/2, lz));
+// Drawer unit (right side under desk)
+box(0.50, 0.62, 0.55, mDesk,   0.85, DESK_Y - 0.34, -1.62);
+box(0.46, 0.12, 0.48, mDesk,   0.85, DESK_Y - 0.14, -1.62);
+box(0.46, 0.12, 0.48, mDesk,   0.85, DESK_Y - 0.34, -1.62);
+// Drawer handles
+cyl(0.015, 0.015, 0.16, 6, mMetalGray, 0.88, DESK_Y - 0.14, -1.36, 0, Math.PI/2);
+cyl(0.015, 0.015, 0.16, 6, mMetalGray, 0.88, DESK_Y - 0.34, -1.36, 0, Math.PI/2);
+
+// ── Monitor ───────────────────────────────────────────────────────────────────
+// Stand base
+box(0.32, 0.04, 0.22, mMetalGray, 0, DESK_Y + 0.02, -1.65);
+// Stand neck
+cyl(0.03, 0.03, 0.32, 6, mMetalGray, 0, DESK_Y + 0.18, -1.65);
+// Monitor back (dark plastic)
+box(1.32, 0.80, 0.07, mScreenBz, 0, DESK_Y + 0.74, -1.72);
+// Monitor bezel
+box(1.28, 0.76, 0.04, mDark,     0, DESK_Y + 0.74, -1.68);
+// Glowing screen
+const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.66), mScreen);
+screen.position.set(0, DESK_Y + 0.74, -1.65);
+screen.receiveShadow = false;
+scene.add(screen);
+// Screen content: faint grid lines suggestion (emissive plane)
+const screenContent = new THREE.Mesh(new THREE.PlaneGeometry(1.12, 0.63),
+  new THREE.MeshStandardMaterial({ color:0x203050, emissive:0x304878, emissiveIntensity:1.0, wireframe:false }));
+screenContent.position.set(0, DESK_Y + 0.74, -1.645);
+scene.add(screenContent);
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+box(0.48, 0.025, 0.17, mKeyboard, 0, DESK_Y + 0.022, -1.27);
+// Key rows suggestion
+for (let r = 0; r < 4; r++)
+  for (let c = 0; c < 13; c++)
+    box(0.027, 0.015, 0.026,
+      new THREE.MeshStandardMaterial({ color: 0x2a2c38, roughness:0.4 }),
+      -0.22 + c * 0.037, DESK_Y + 0.04, -1.22 + r * 0.036);
+
+// ── Mouse ─────────────────────────────────────────────────────────────────────
+const mouseMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(0.06, 0.025, 0.10), mKeyboard);
+mouseMesh.position.set(0.35, DESK_Y + 0.02, -1.28);
+scene.add(mouseMesh);
+
+// ── Desk lamp ─────────────────────────────────────────────────────────────────
+// Placed on desk surface: x=-0.85, z=-1.40 (left side of desk, within desk bounds)
+// Rod 2 tilts toward +z (rotation.x=+0.55) so shade hangs over the keyboard area.
+// Geometry chain: base → rod1(vertical) → joint → rod2(tilted) → shade
+const LX = -0.85, LZ = -1.40;
+// Base disk
+cyl(0.09, 0.11, 0.03, 12, mLamp, LX, DESK_Y + 0.016, LZ);
+// Rod 1 — vertical, 0.50 tall; bottom at base top, center halfway up
+cyl(0.018, 0.018, 0.50, 6, mLamp, LX, DESK_Y + 0.016 + 0.25, LZ);
+// Joint sphere at top of rod 1
+const jnt = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 8), mLamp);
+jnt.position.set(LX, DESK_Y + 0.016 + 0.50 + 0.026, LZ);
+scene.add(jnt);
+// Rod 2 — tilts toward character (+z direction), rotation.x=+0.55
+// Direction of rod axis: (0, cos0.55, sin0.55) = (0, 0.853, 0.523)
+// Center = joint_top + direction * half_length(0.19)
+const R2Y = DESK_Y + 0.016 + 0.526 + 0.853 * 0.19;   // ≈ DESK_Y + 0.704
+const R2Z = LZ + 0.523 * 0.19;                         // ≈ LZ + 0.099
+cyl(0.018, 0.018, 0.38, 6, mLamp, LX, R2Y, R2Z, 0.55);
+// Shade tip = joint_top + direction * 0.38
+const SHD_Y = DESK_Y + 0.016 + 0.526 + 0.853 * 0.38;  // ≈ DESK_Y + 0.867
+const SHD_Z = LZ + 0.523 * 0.38;                       // ≈ LZ + 0.199
+const shade = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.22, 14, 1, true), mLampShd);
+shade.position.set(LX, SHD_Y, SHD_Z);
+shade.rotation.x = Math.PI;   // open downward
+scene.add(shade);
+// Bulb
+const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6),
+  new THREE.MeshStandardMaterial({ emissive: 0xffe066, emissiveIntensity: 3.0, color: 0xffee88 }));
+bulb.position.set(LX, SHD_Y - 0.06, SHD_Z);
+scene.add(bulb);
+
+// ── Mug ───────────────────────────────────────────────────────────────────────
+cyl(0.055, 0.048, 0.12, 12, mMug, -0.80, DESK_Y + 0.065, -1.46);
+const mugInner = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.10, 12), mDark);
+mugInner.position.set(-0.80, DESK_Y + 0.072, -1.46);
+scene.add(mugInner);
+
+// ── Small plant ───────────────────────────────────────────────────────────────
+cyl(0.07, 0.09, 0.12, 10, mPot, 0.95, DESK_Y + 0.065, -1.78);
+cyl(0.06, 0.07, 0.09, 10, mPot, 0.95, DESK_Y + 0.065, -1.78); // inner lighter
+const plantLeaf = (ox, oy, oz, rx, ry) => {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.10, 5, 5), mPlant);
+  m.scale.set(0.9, 0.6, 0.9); m.position.set(0.95+ox, DESK_Y+0.20+oy, -1.78+oz);
+  m.rotation.set(rx, ry, 0); m.castShadow = true; scene.add(m);
+};
+plantLeaf(0, 0.05, 0, 0, 0); plantLeaf(0.07, 0, 0.04, -0.4, 0.5);
+plantLeaf(-0.06, 0, 0.05, -0.3, -0.6); plantLeaf(0, 0.02, -0.07, 0.4, 0.2);
+
+// ── Headphones on desk ────────────────────────────────────────────────────────
+box(0.02, 0.12, 0.02, mDark, -0.50, DESK_Y + 0.09, -1.78);
+box(0.02, 0.12, 0.02, mDark, -0.38, DESK_Y + 0.09, -1.78);
+box(0.14, 0.02, 0.02, mDark, -0.44, DESK_Y + 0.15, -1.78);
+cyl(0.04, 0.04, 0.025, 8, mDark,  -0.50, DESK_Y + 0.04, -1.78, Math.PI/2);
+cyl(0.04, 0.04, 0.025, 8, mDark,  -0.38, DESK_Y + 0.04, -1.78, Math.PI/2);
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  CHAIR
+// ═════════════════════════════════════════════════════════════════════════════
+const SEAT_Y = 0.48;
+// Seat cushion
+box(0.52, 0.10, 0.50, mChair, 0, SEAT_Y + 0.05, -0.38);
+// Back rest
+box(0.52, 0.68, 0.08, mChair, 0, SEAT_Y + 0.44, -0.62);
+// Lumbar support bump
+box(0.46, 0.22, 0.06, mChair, 0, SEAT_Y + 0.18, -0.61);
+// Armrests
+box(0.04, 0.07, 0.38, mChair, -0.28, SEAT_Y + 0.22, -0.42);
+box(0.04, 0.07, 0.38, mChair,  0.28, SEAT_Y + 0.22, -0.42);
+// Arm pads
+box(0.08, 0.028, 0.22, mChairL, -0.28, SEAT_Y + 0.26, -0.34);
+box(0.08, 0.028, 0.22, mChairL,  0.28, SEAT_Y + 0.26, -0.34);
+// Central column
+cyl(0.04, 0.04, SEAT_Y, 8, mChairL, 0, SEAT_Y/2, -0.38);
+// Star base
+for (let i = 0; i < 5; i++) {
+  const a = (i/5) * Math.PI * 2;
+  box(0.06, 0.04, 0.44, mChairL, Math.sin(a)*0.18, 0.02, -0.38 + Math.cos(a)*0.18, a);
+  cyl(0.04, 0.04, 0.06, 6, mChairL, Math.sin(a)*0.40, 0.025, -0.38 + Math.cos(a)*0.40);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  BOOKSHELF (left wall)
+// ═════════════════════════════════════════════════════════════════════════════
+const SX = -RW/2 + 0.62;
+box(0.56, 1.95, 0.28, mShelf, SX, 0.975, -1.85);  // outer box
+// Shelves
+[0.45, 0.90, 1.35, 1.80].forEach(sy =>
+  box(0.48, 0.03, 0.24, mWoodLt, SX, sy, -1.85));
+// Books
+const bookMats = [mBook1, mBook2, mBook3, mBook4];
+const bookData = [
+  // [x_offset, shelf_y, width, height]
+  [-0.14, 0.65, 0.055, 0.18], [-0.08, 0.65, 0.04, 0.16], [-0.02, 0.65, 0.065, 0.20],
+  [ 0.05, 0.65, 0.04, 0.14], [ 0.10, 0.65, 0.07, 0.19],
+  [-0.15, 1.10, 0.06, 0.22], [-0.07, 1.10, 0.045, 0.18], [ 0.00, 1.10, 0.08, 0.24],
+  [ 0.08, 1.10, 0.055, 0.20],
+  [-0.13, 1.55, 0.07, 0.20], [-0.05, 1.55, 0.05, 0.22], [ 0.02, 1.55, 0.06, 0.18],
+  [ 0.10, 1.55, 0.04, 0.16],
+];
+bookData.forEach(([bx, by, bw, bh], i) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 0.20), bookMats[i % 4]);
+  m.position.set(SX + bx, by + bh/2, -1.85);
+  m.castShadow = true; scene.add(m);
+});
+
+// Small figurine on shelf
+const figBody = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8),
+  new THREE.MeshStandardMaterial({ color: 0x334466, metalness: 0.4, roughness: 0.3 }));
+figBody.position.set(SX + 0.14, 1.67, -1.85);
+scene.add(figBody);
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  FLOOR LAMP (back right corner)
+// ═════════════════════════════════════════════════════════════════════════════
+const FL_X = 3.4, FL_Z = -2.8;
+cyl(0.10, 0.14, 0.04, 12, mLamp, FL_X, 0.02, FL_Z);
+cyl(0.022, 0.022, 1.72, 8, mLamp, FL_X, 0.88, FL_Z);
+const flShade = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.32, 16, 1, true), mLampShd);
+flShade.position.set(FL_X, 1.89, FL_Z);
+scene.add(flShade);
+// Floor lamp warm light
+const flLampLight = new THREE.PointLight(0xff8822, 1.4, 4.5, 2);
+flLampLight.position.set(FL_X, 1.72, FL_Z);
+scene.add(flLampLight);
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  CHARACTER — GLTF / Mixamo 모델 로더
+// ═════════════════════════════════════════════════════════════════════════════
+//  Mixamo 캐릭터 사용 방법:
+//   1. https://www.mixamo.com 접속 (Adobe 무료 계정)
+//   2. 원하는 캐릭터 선택 → Animations 탭에서 "Sitting Typing" 또는 "Sitting Idle" 검색
+//   3. Download → Format: FBX for Three.js → 다운로드
+//   4. FBX → GLB 변환: https://products.aspose.app/3d/conversion/fbx-to-glb 에서 변환
+//   5. 변환된 파일을 games/character.glb 로 저장
+//   6. 로컬 서버 실행: npx serve .  →  http://localhost:3000/games/indoor_room.html 접속
+//   7. 아래 MODEL_URL을 './character.glb' 로 변경
+// ─────────────────────────────────────────────────────────────────────────────
+const MODEL_URL = 'https://threejs.org/examples/models/gltf/Soldier.glb'; // 기본 데모 모델
+
+let mixer   = null;
+let headBone = null;
+let headYaw = 0, headPitch = 0;
+
+const _headWorldPos = new THREE.Vector3();
+const _worldDir     = new THREE.Vector3();
+const _localDir     = new THREE.Vector3();
+const _parentWorldQ = new THREE.Quaternion();
+const _invQ         = new THREE.Quaternion();
+const _trackQ       = new THREE.Quaternion();
+const _trackEuler   = new THREE.Euler(0, 0, 0, 'YXZ');
+
+const loader = new GLTFLoader();
+loader.load(MODEL_URL, (gltf) => {
+  const model = gltf.scene;
+  model.scale.setScalar(1.0);
+  model.position.set(0, 0, -0.30);
+  // Mixamo 모델은 기본적으로 -Z를 향하므로 Math.PI 회전으로 카메라 쪽을 향하게 함
+  // 모델이 반대로 보일 경우 아래 줄을 주석 처리하세요
+  model.rotation.y = Math.PI;
+
+  model.traverse(child => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+    // Mixamo 머리 뼈대 이름: mixamorigHead
+    if (child.isBone) {
+      const n = child.name.toLowerCase();
+      if (n.includes('head') && !n.includes('headtop') && !n.includes('_end')) {
+        headBone = child;
+      }
+    }
+  });
+
+  scene.add(model);
+
+  if (gltf.animations.length > 0) {
+    mixer = new THREE.AnimationMixer(model);
+    // Idle 또는 Sit 애니메이션 우선, 없으면 첫 번째 애니메이션 재생
+    const clip = gltf.animations.find(a => /idle|sit/i.test(a.name))
+              ?? gltf.animations[0];
+    mixer.clipAction(clip).play();
+    console.log('재생 중:', clip.name, '| 뼈대 목록:', [...new Set(
+      [...model.children].flatMap(c => { const bones = []; c.traverse(x => x.isBone && bones.push(x.name)); return bones; })
+    )].join(', '));
+  }
+}, undefined, err => console.error('모델 로드 실패:', err));
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  ANIMATE
+// ═════════════════════════════════════════════════════════════════════════════
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+
+  if (mixer) {
+    // 애니메이션 업데이트
+    mixer.update(delta);
+
+    // 머리 뼈대 시선 추적 (mixer.update() 이후에 적용해야 올바르게 덮어씌워짐)
+    if (headBone) {
+      headBone.getWorldPosition(_headWorldPos);
+      _worldDir.subVectors(camera.position, _headWorldPos).normalize();
+
+      // 부모 뼈대의 월드 공간 → 로컬 공간으로 변환
+      headBone.parent.getWorldQuaternion(_parentWorldQ);
+      _invQ.copy(_parentWorldQ).invert();
+      _localDir.copy(_worldDir).applyQuaternion(_invQ);
+
+      const tYaw   = Math.atan2( _localDir.x, _localDir.z);
+      const tPitch = Math.atan2(-_localDir.y,
+        Math.sqrt(_localDir.x ** 2 + _localDir.z ** 2));
+
+      headYaw   += (Math.max(-0.45, Math.min(0.45, tYaw))   - headYaw)   * 0.06;
+      headPitch += (Math.max(-0.30, Math.min(0.35, tPitch)) - headPitch) * 0.06;
+
+      // 애니메이션 회전에 시선 추적 회전을 합성
+      _trackEuler.set(headPitch, headYaw, 0);
+      _trackQ.setFromEuler(_trackEuler);
+      headBone.quaternion.multiply(_trackQ);
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

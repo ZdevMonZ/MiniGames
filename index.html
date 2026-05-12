@@ -507,6 +507,142 @@
     .go-s.w { background: radial-gradient(circle at 35% 30%, #ffffff, #cbcbcb 75%); box-shadow: 1px 2px 4px rgba(0,0,0,0.35); }
     .go-s.b.gg { box-shadow: 1px 2px 5px rgba(0,0,0,0.7), 0 0 10px rgba(255,155,0,0.65); }
 
+    /* ── 3D 학교 ── */
+    .thumb-school3d {
+      background: linear-gradient(180deg, #1c3f7a 0%, #4a8dd6 44%, #3a8830 72%, #7a5a28 100%);
+      overflow: hidden;
+    }
+    .sc3-scene {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; height: 100%; padding-bottom: 10px; gap: 2px;
+    }
+    .sc3-bldg {
+      width: 72px; height: 50px;
+      background: linear-gradient(170deg, #f6e6b2 0%, #d4bc74 100%);
+      border: 1.5px solid #aa924c;
+      position: relative;
+      box-shadow:
+        5px -5px 0 0 #e2d28a,
+        10px -10px 0 0 #c4ad64,
+        10px -10px 0 1px #9a7c38,
+        0 5px 16px rgba(0,0,0,0.4);
+      margin-top: 14px;
+    }
+    .sc3-wins {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 4px; padding: 6px 7px 5px;
+    }
+    .sc3-win {
+      height: 10px;
+      background: linear-gradient(180deg, #c0e8fa 0%, #7ac0e8 100%);
+      border: 1px solid rgba(200,240,255,0.5);
+      border-radius: 1px;
+      box-shadow: 0 0 4px rgba(100,200,255,0.6);
+    }
+    .sc3-door {
+      position: absolute;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 12px; height: 16px;
+      background: #6a3e18;
+      border-radius: 2px 2px 0 0;
+      border: 1px solid #4a2a0e;
+    }
+    .sc3-flag { position: absolute; top: -22px; right: 6px; }
+    .sc3-flagpole { width: 2px; height: 18px; background: #aaa; border-radius: 1px; }
+    .sc3-flagcloth {
+      position: absolute; top: 0; left: 2px;
+      width: 10px; height: 6px;
+      background: linear-gradient(135deg, #f04040, #f07050);
+      clip-path: polygon(0 0, 100% 40%, 0 100%);
+    }
+    .sc3-playground {
+      width: 80px; height: 18px;
+      background: radial-gradient(ellipse, #c89050 0%, #9a6830 70%);
+      border-radius: 50%;
+      border: 1.5px solid #8a5c26;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+    }
+
+    /* ── 3D 실내 방 ── */
+    .thumb-indoor3d {
+      background: radial-gradient(ellipse at 38% 65%, #3a1e06 0%, #140a02 55%, #080402 100%);
+      overflow: hidden;
+      position: relative;
+    }
+    .ind-glow-monitor {
+      position: absolute;
+      bottom: -6px; left: 50%; transform: translateX(-50%);
+      width: 80px; height: 44px;
+      background: radial-gradient(ellipse at 50% 100%, rgba(60,120,240,0.45) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ind-glow-lamp {
+      position: absolute;
+      top: 8px; left: 12px;
+      width: 44px; height: 44px;
+      background: radial-gradient(ellipse, rgba(255,150,30,0.38) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ind-scene {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; gap: 6px;
+    }
+    .ind-head {
+      width: 58px; height: 64px;
+      background: radial-gradient(ellipse at 44% 42%, #fad8a8 0%, #e0a870 70%);
+      border-radius: 50%;
+      position: relative;
+      box-shadow:
+        -5px -3px 14px rgba(255,140,30,0.30),
+        3px 4px 18px rgba(60,120,240,0.24);
+    }
+    .ind-hair {
+      position: absolute;
+      top: -2px; left: -2px; right: -2px; height: 26px;
+      background: #18100a;
+      border-radius: 60% 60% 10% 10%;
+    }
+    .ind-eyes {
+      position: absolute;
+      top: 25px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 13px;
+    }
+    .ind-eye {
+      width: 14px; height: 13px;
+      background: #fff8f8;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 5px rgba(60,120,240,0.35);
+    }
+    .ind-iris {
+      width: 8px; height: 8px;
+      background: radial-gradient(circle at 35% 30%, #5888c8, #1a3468);
+      border-radius: 50%;
+      position: relative;
+    }
+    .ind-iris::after {
+      content: '';
+      position: absolute; top: 1px; left: 2px;
+      width: 3px; height: 3px;
+      background: rgba(255,255,255,0.82);
+      border-radius: 50%;
+    }
+    .ind-smile {
+      position: absolute;
+      bottom: 12px; left: 50%; transform: translateX(-50%);
+      width: 18px; height: 8px;
+      border-bottom: 2px solid rgba(195,100,70,0.55);
+      border-radius: 0 0 50% 50%;
+    }
+    .ind-monitor {
+      width: 52px; height: 7px;
+      background: linear-gradient(90deg, #1a2f58, #263d70);
+      border-radius: 2px;
+      box-shadow: 0 0 14px rgba(60,120,240,0.75), 0 0 28px rgba(60,120,240,0.3);
+    }
+
     /* 하단 네비게이션 */
     .bottom-nav {
       border-top: 0.5px solid #EEE;
@@ -799,6 +935,58 @@
         </div>
         <div class="title">소코반</div>
         <div class="meta"><span>👍 93%</span><span>👤 810K</span></div>
+      </div>
+
+    </div>
+
+    <!-- 섹션: 모바일 3D 공간 -->
+    <div class="section-header">
+      모바일에서 즐기는 3D 공간! <span class="emoji">🌐</span>
+    </div>
+
+    <div class="game-grid">
+
+      <div class="game-card" onclick="window.location.href='games/school_3d.html'">
+        <div class="thumb thumb-school3d">
+          <span class="badge new">NEW</span>
+          <div class="sc3-scene">
+            <div class="sc3-bldg">
+              <div class="sc3-flag">
+                <div class="sc3-flagpole"></div>
+                <div class="sc3-flagcloth"></div>
+              </div>
+              <div class="sc3-wins">
+                <div class="sc3-win"></div><div class="sc3-win"></div><div class="sc3-win"></div>
+                <div class="sc3-win"></div><div class="sc3-win"></div><div class="sc3-win"></div>
+              </div>
+              <div class="sc3-door"></div>
+            </div>
+            <div class="sc3-playground"></div>
+          </div>
+        </div>
+        <div class="title">3D 학교 운동장</div>
+        <div class="meta"><span>👍 97%</span><span>👤 1.8M</span></div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/indoor_room.html'">
+        <div class="thumb thumb-indoor3d">
+          <span class="badge new">NEW</span>
+          <div class="ind-glow-monitor"></div>
+          <div class="ind-glow-lamp"></div>
+          <div class="ind-scene">
+            <div class="ind-head">
+              <div class="ind-hair"></div>
+              <div class="ind-eyes">
+                <div class="ind-eye"><div class="ind-iris"></div></div>
+                <div class="ind-eye"><div class="ind-iris"></div></div>
+              </div>
+              <div class="ind-smile"></div>
+            </div>
+            <div class="ind-monitor"></div>
+          </div>
+        </div>
+        <div class="title">3D 인터랙티브 방</div>
+        <div class="meta"><span>👍 96%</span><span>👤 1.2M</span></div>
       </div>
 
     </div>
